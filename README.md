@@ -37,5 +37,5 @@ Eseentially, we calculate `R_tilde` from a LD reference panel and then we use `(
 
 # Dependencies
 
-`environment.yml` is coming soon!
+Use `conda env create -f environment.yml` to install the dependencies. 
 Also, need to pre-append `transethnic_prs` [link](https://github.com/liangyy/transethnic_prs) to `PYTHONPATH`.

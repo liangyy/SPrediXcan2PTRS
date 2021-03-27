@@ -1,0 +1,19 @@
+name: SPrediXcan2PTRS
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - ipython
+  - jax=0.2.10
+  - jupyter
+  - matplotlib
+  - numpy=1.19
+  - pandas=1.2
+  - pandas-plink=2.2.4
+  - pip
+  - pyliftover=0.4
+  - python=3.7
+  - scipy=1.6
+  - seaborn
+
