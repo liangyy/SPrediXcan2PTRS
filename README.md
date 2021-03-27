@@ -35,3 +35,7 @@ argmin_x x' R x - 2 b' x + lambda * ( alpha * ||x||_1 + (1 - alpha) / 2 ||x||_2^
 In practice, we need to calculate an approximation of `R` from a reference panel. To stablize the model fitting, we add an `offset` term (see more details in `lassosum` paper).
 Eseentially, we calculate `R_tilde` from a LD reference panel and then we use `(1 - offset) R_tilde + offset I` to replace `R`. 
 
+# Dependencies
+
+`environment.yml` is coming soon!
+Also, need to pre-append `transethnic_prs` [link](https://github.com/liangyy/transethnic_prs) to `PYTHONPATH`.
