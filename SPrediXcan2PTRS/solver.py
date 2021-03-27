@@ -4,13 +4,14 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
+import transethnic_prs.model1.Model1Blk as m1b
 from transethnic_prs.util.misc import intersect_two_lists
 from transethnic_prs.util.genotype_io import snpinfo_to_snpid
 from transethnic_prs.util.math_jax import mean_center_col_2d_jax
 from transethnic_prs.util.math import diag_mul_mat, mat_mul_diag
 
 class Solver:
-    def __init__(self, df_pxcan, weight_db, geno_bed, gene_list=None, lazy=False):
+    def __init__(self, df_pxcan, sample_size, weight_db, geno_bed, gene_list=None, lazy=False):
         '''
         Inputs:
             1. df_pxcan: pd.DataFrame({'gene': gene, 'zscore': zscore})
@@ -32,6 +33,8 @@ class Solver:
         '''
         self.geno_bed = geno_bed 
         self.weight_db = weight_db
+        self.df_pxcan = df_pxcan
+        self.sample_size = sample_size
         self.snp_cols = ['chrom', 'position', 'effect_allele', 'non_effect_allele']
         genes = self._get_common_genes(
             list(df_pxcan.gene), 
@@ -45,8 +48,31 @@ class Solver:
         if lazy is True:
             return 
         self._build_cor(genes=self.gene_w_vars)
-    def build_cor(self, genes=None):
+        self._init_z()
+    def init_w_genes(self, genes=None):
         self._build_cor(genes)
+        self._init_z()
+    def init_model1blk(self):
+        '''
+        Initiate an transethnic_prs.model1.Model1Blk instance
+        Set self.Xlist as 1 x p zero matrix and y as length-1 zero vector. 
+        '''
+        self.model1_blk = m1b.Model1Blk(
+            Alist=self.R,
+            blist=[ z / np.sqrt(self.sample_size) for z in self.z_predixcan ],
+            Xlist=[ np.zeros((2, z.shape[0])) for z in self.z_predixcan ],
+            y=np.zeros((2, ))
+        )
+    def _init_z(self):
+        zlist = []
+        for gg in self.genes:
+            zlist.append(
+                pd.merge(
+                    pd.DataFrame({'gene': gg}),
+                    self.df_pxcan[['gene', 'zscore']], on='gene'
+                ).zscore.values
+            )
+        self.z_predixcan = zlist
     def _get_common_genes(self, pxcan_gene, gene_list=None):
         db_gene = self.weight_db.get_gene_info()
         genes = intersect_two_lists(pxcan_gene, db_gene)
@@ -121,6 +147,16 @@ class Solver:
         cov_pe = GxW.T @ GxW
         var_pe = cov_pe.diagonal()
         sqrt_var_pe = np.sqrt(var_pe)
-        R = diag_mul_mat(1 / sqrt_var_pe, mat_mul_diag(cov_pe, 1 / sqrt_var_pe))
+        R = np.array(diag_mul_mat(1 / sqrt_var_pe, mat_mul_diag(cov_pe, 1 / sqrt_var_pe)))
         return R, var_pe, list(df_gene.gene)
-        
+    def fit_ptrs(self, alpha=0.5, offset=0, nlambda=100, ratio_lambda=100, tol=1e-5, maxiter=1000):
+        # rescale offset to eff_offset 
+        # so that we fit A + eff_offset * I 
+        # instead of (1 - offset) A + offset * I
+        eff_offset = offset / (1 - offset)
+        beta, lambda_, niter, tol = self.model1_blk.solve_path(
+            alpha=alpha, offset=eff_offset, tol=tol, maxiter=maxiter, nlambda=nlambda, ratio_lambda=ratio_lambda
+        )
+        # need to rescale lambda_
+        return beta, lambda_ * (1 - offset), niter, tol
+    
