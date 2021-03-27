@@ -95,7 +95,7 @@ class Solver:
         self.R = []
         self.genes = []
         self.var_gene = []
-        for i in range(21, 23):
+        for i in range(1, 23):
             df_gv = df_gene_var[ df_gene_var.chrom == i ].reset_index(drop=True)
             if df_gv.shape[0] == 0:
                 continue
