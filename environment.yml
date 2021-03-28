@@ -10,8 +10,7 @@ dependencies:
   - matplotlib
   - numpy=1.19
   - pandas=1.2
-  - pandas-plink=2.2.4
-  - pip
+  - pandas-plink==2.2.4
   - pyliftover=0.4
   - python=3.7
   - scipy=1.6

@@ -11,7 +11,7 @@ from transethnic_prs.util.math_jax import mean_center_col_2d_jax
 from transethnic_prs.util.math import diag_mul_mat, mat_mul_diag
 
 class Solver:
-    def __init__(self, df_pxcan, sample_size, weight_db, geno_bed, gene_list=None, lazy=False):
+    def __init__(self, df_pxcan, sample_size, weight_db, geno_bed, gene_list=None, lazy=False, show_progress_bar=False):
         '''
         Inputs:
             1. df_pxcan: pd.DataFrame({'gene': gene, 'zscore': zscore})
@@ -47,10 +47,10 @@ class Solver:
         self.gene_w_vars = list(self.gene_meta[ self.gene_meta.nsnp_in_ref > 0 ].gene)
         if lazy is True:
             return 
-        self._build_cor(genes=self.gene_w_vars)
+        self._build_cor(genes=self.gene_w_vars, show_progress_bar=show_progress_bar)
         self._init_z()
-    def init_w_genes(self, genes=None):
-        self._build_cor(genes)
+    def init_w_genes(self, genes=None, show_progress_bar=False):
+        self._build_cor(genes, show_progress_bar=show_progress_bar)
         self._init_z()
     def init_model1blk(self):
         '''
@@ -110,7 +110,7 @@ class Solver:
         df_gene_var_new.chrom = df_gene_var_new.chrom.astype(int)
         df_gene_var_new.position = df_gene_var_new.position.astype(int)
         return df_gene_var_new, df_meta
-    def _build_cor(self, genes=None):
+    def _build_cor(self, genes=None, show_progress_bar=False):
         if genes is None:
             genes = list(self.gene_w_vars)
         else:
@@ -121,7 +121,7 @@ class Solver:
         self.R = []
         self.genes = []
         self.var_gene = []
-        for i in range(1, 23):
+        for i in tqdm(range(1, 23), disable=not show_progress_bar):
             df_gv = df_gene_var[ df_gene_var.chrom == i ].reset_index(drop=True)
             if df_gv.shape[0] == 0:
                 continue
