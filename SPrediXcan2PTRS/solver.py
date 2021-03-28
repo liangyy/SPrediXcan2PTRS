@@ -159,4 +159,14 @@ class Solver:
         )
         # need to rescale lambda_
         return beta, lambda_ * (1 - offset), niter, tol
+    def fit_ptrs_by_blk(self, alpha=0.5, offset=0, nlambda=100, ratio_lambda=100, tol=1e-5, maxiter=1000):
+        # rescale offset to eff_offset 
+        # so that we fit A + eff_offset * I 
+        # instead of (1 - offset) A + offset * I
+        eff_offset = offset / (1 - offset)
+        beta, lambda_, niter, tol = self.model1_blk.solve_path_by_blk(
+            alpha=alpha, offset=eff_offset, tol=tol, maxiter=maxiter, nlambda=nlambda, ratio_lambda=ratio_lambda
+        )
+        # need to rescale lambda_
+        return beta, lambda_ * (1 - offset), niter, tol
     
