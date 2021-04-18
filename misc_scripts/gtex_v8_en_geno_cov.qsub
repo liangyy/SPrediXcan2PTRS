@@ -1,0 +1,36 @@
+#PBS -S /bin/bash
+#PBS -l walltime=24:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=32gb
+#PBS -e gtex_v8_en_geno_cov/$TISSUE.${PBS_JOBID}.err
+#PBS -o gtex_v8_en_geno_cov/$TISSUE.${PBS_JOBID}.out
+
+
+source ~/.bash_profile
+source ~/.bashrc
+
+conda activate SPrediXcan2PTRS
+
+# load extra python dependency
+export PYTHONPATH=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/SPrediXcan2PTRS
+
+# script path 
+gen_script=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/SPrediXcan2PTRS/generate_gtex_v8_geno_cov.py
+
+# input data
+genotype=/gpfs/data/gtex-group/v8/59348/gtex/exchange/GTEx_phs000424/exchange/analysis_releases/GTEx_Analysis_2017-06-05_v8/genotypes/WGS/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.MAF01.vcf.gz
+predictdb=/gpfs/data/im-lab/nas40t2/abarbeira/projects/gtex_v8/models_v1/eqtl/elastic_net_models/en_$TISSUE.db
+
+# output
+outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/geno_cov/gtex_v8/
+prefix=en_$TISSUE.geno_cov
+
+cd ${PBS_O_WORKDIR}
+
+python $gen_script \
+  --genotype_vcf $genotype \
+  --predictdb $predictdb \
+  --mode banded 500 \
+  --output_prefix $outdir/$prefix > \
+  gtex_v8_en_geno_cov/$TISSUE.${PBS_JOBID}.log 2>&1
+  
