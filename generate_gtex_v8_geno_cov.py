@@ -64,12 +64,12 @@ if __name__ == '__main__':
     mode, param, out_ext = load_mode(args.mode)
     
     logging.info('Constructing Genotype and DB loaders.')
-    weight_v8 = v8.GTExV8DBLoader(db)
-    geno_v8 = v8.GTExV8GenoLoader(geno)
+    weight_v8 = v8.GTExV8DBLoader(args.predictdb)
+    geno_v8 = v8.GTExV8GenoLoader(args.genotype_vcf)
     
     for chr_num in range(1, 23):
-        output_prefix = f'{}.chr{}'.format(args.output_prefix, chr_num)
-        target_file = f'output_prefix.{out_ext}'
+        output_prefix = '{}.chr{}'.format(args.output_prefix, chr_num)
+        target_file = f'{output_prefix}.{out_ext}'
         if file_exists(target_file):
             logging.info(f'Target file exists for chromosome {chr_num}.')
             continue
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         logging.info(f'Saving geno cov for chromosome {chr_num}.')
         cov_constructor.compute_to_disk(
             mode, 
-            target_file, 
+            output_prefix, 
             param
         )
     

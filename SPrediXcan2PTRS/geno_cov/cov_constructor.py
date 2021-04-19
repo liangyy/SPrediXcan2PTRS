@@ -2,7 +2,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, save_npz, load_npz
 
 class CovConstructor:
-    def __init__(self, data, nbatch=None):
+    def __init__(self, data, nbatch=10):
         '''
         Important: self.data is ALWAYS centered
         '''

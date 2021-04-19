@@ -4,7 +4,7 @@ import cyvcf2 as cy
 import sqlite3 as sq
 import pandas as pd
 import numpy as np
-
+# from tqdm import tqdm
 
 COMPLEMENT_BASE = {
     'A': 'T',
@@ -26,7 +26,6 @@ def get_complement(str_):
 
 class TargetSNP:
     def __init__(self, df_snp):
-        self._if_unique_chr_pos(df_snp)
         self._init_snp_dict(df_snp)
     def _init_snp_dict(self, df_snp):
         self.snp_dict = OrderedDict()
@@ -55,12 +54,12 @@ class TargetSNP:
         if key_ not in self.snp_dict:
             return None, None
         snps = self.snp_dict[key_]
-        for i in range(snps.shape[0]):
-            res = self._try_match(snps.ref[i], snps.alt[i], ref, alt)
+        for i in range(len(snps)):
+            res = self._try_match(snps[i].ref.values[0], snps[i].alt.values[0], ref, alt)
             if res == 0:
                 continue
             else:
-                return snps.iloc[i:(i + 1), :].copy(), res
+                return snps[i].copy(), res
         return None, None
     @staticmethod
     def gen_chrpos(chr, pos):
@@ -89,10 +88,10 @@ class GTExV8GenoLoader:
             df_snp_sub = df_snp[ df_snp.chr == cc ]
             start = df_snp_sub.pos.min()
             end = df_snp_sub.pos.max()
-            snps_sub, geno_mat_sub = self._load_region(f'{cc}:{start - 1}:{end}', target_snps=df_snp_sub)
+            snps_sub, geno_mat_sub = self._load_region(f'{cc}:{start - 1}-{end}', target_snps=df_snp_sub)
             geno_mat.append(geno_mat_sub)
             snps.append(snps_sub)
-        geno_mat = np.concatenate(geno_mat, axis=0)
+        geno_mat = np.concatenate(geno_mat, axis=1)
         snps = pd.concat(snps, axis=0)
         return geno_mat, snps
     def _load_region(self, region, target_snps):
@@ -109,16 +108,16 @@ class GTExV8GenoLoader:
                 mat = np.array(kk.genotypes)[:, :2].sum(axis=1)
                 if direction == -1:
                     mat = 2 - mat
-                geno_mat.append(mat)
+                geno_mat.append(mat[:, np.newaxis])
                 snps.append(snpi)
         snps = pd.concat(snps, axis=0)
-        geno_mat = pd.concat(geno_mat, axis=0)
-        return geno_mat, snps
+        geno_mat = np.concatenate(geno_mat, axis=1)
+        return snps, geno_mat
             
 
 class GTExV8DBLoader:
     def __init__(self, db):
-        with sq.connect(db) as conn
+        with sq.connect(db) as conn:
             df_weight = pd.read_sql_query('select * from weights', conn)
         df_weight['chr'], df_weight['pos'] = self._parse_varID(df_weight.varID)
         self.df_weight = df_weight
@@ -131,4 +130,5 @@ class GTExV8DBLoader:
             cc.append(tmp[0])
             pp.append(int(tmp[1]))
         return cc, pp
-            
+    def get_by_chr(self, chr_):
+        return self.df_weight[ self.df_weight.chr == chr_ ].reset_index(drop=True)    
