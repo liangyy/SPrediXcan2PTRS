@@ -20,7 +20,7 @@ def get_complement(str_):
         char_ = s.upper()
         if char_ not in COMPLEMENT_BASE:
             raise ValueError(f'Wrong s in str_: s = {s}.')
-        o += COMPLEMENT_BASE[char_]
+        o = COMPLEMENT_BASE[char_] + o
     return o
 
 
@@ -100,6 +100,10 @@ class GTExV8GenoLoader:
         geno_mat = []
         for kk in self.vcf(region):
             ch, pos, ref, alt = kk.CHROM, kk.POS, kk.REF, kk.ALT
+            if len(alt) > 1:
+                continue
+            else:
+                alt = alt[0]
             kk_key = snp_target.gen_chrpos(ch, pos)
             snpi, direction = snp_target.get_snp(kk_key, ref, alt)
             if snpi is None:
