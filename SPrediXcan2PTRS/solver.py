@@ -7,31 +7,30 @@ from tqdm import tqdm
 import transethnic_prs.model1.Model1Blk as m1b
 from transethnic_prs.util.misc import intersect_two_lists
 from transethnic_prs.util.genotype_io import snpinfo_to_snpid
-from transethnic_prs.util.math_jax import mean_center_col_2d_jax
 from transethnic_prs.util.math import diag_mul_mat, mat_mul_diag
 
 class Solver:
-    def __init__(self, df_pxcan, sample_size, weight_db, geno_bed, gene_list=None, lazy=False, show_progress_bar=False):
+    def __init__(self, df_pxcan, sample_size, weight_db, geno_cov, df_gwas=None, gene_list=None, lazy=False, show_progress_bar=False):
         '''
         Inputs:
             1. df_pxcan: pd.DataFrame({'gene': gene, 'zscore': zscore})
             2. weight_db: WeightDB object 
                           (see SPrediXcan2PTRS/util/db.py)
                           # from prediction model weights in PredictDB sqlite3 format
-            3. geno_bed: PlinkBedIo object 
-                         (see transethnic_prs/util/genotype_io.py)
-                         # from genotype PLINK BED
+            3. geno_cov: GenoCov object 
+                             (see SPrediXcan2PTRS/geno_cov/cov_constructor.py)
+            4. df_gwas_snp: pd.DataFrame({'chrom', 'position', 'effect_allele', 'non_effect_allele'}) showing the SNPs being included in GWAS.
         Outputs:
             self.R = predicted gene correlation matrix
             self.z = PrediXcan z-score
         Formula:
             # do it one chromosome at a time
+            # for only SNPs that occur in GWAS.
             Cov(i, j) = w(i)' Cov(X) w(j)
             R = sqrt(diag(Cov))^-1 Cov sqrt(diag(Cov))^-1
-        Caution: 
-            Only use the non-ambiguious SNPs
+        
         '''
-        self.geno_bed = geno_bed 
+        self.geno_cov = geno_cov 
         self.weight_db = weight_db
         self.df_pxcan = df_pxcan
         self.sample_size = sample_size
@@ -40,8 +39,8 @@ class Solver:
             list(df_pxcan.gene), 
             gene_list=gene_list
         )
-        db_df_gene_var = self._get_variants_per_gene(genes)
-        self.db_df_gene_var, self.gene_meta = self._check_in_ref_geno(
+        db_df_gene_var = self._get_variants_per_gene(genes, df_gwas_snp)
+        self.db_df_gene_var, self.gene_meta = self._check_in_ref_geno_cov(
             db_df_gene_var
         )
         self.gene_w_vars = list(self.gene_meta[ self.gene_meta.nsnp_in_ref > 0 ].gene)
@@ -79,24 +78,38 @@ class Solver:
         if gene_list is not None:
             genes = intersect_two_lists(genes, gene_list)
         return genes
-    def _get_variants_per_gene(self, genes, disable_progress_bar=False):
-        return self.weight_db.get_variants_of_gene(genes)
-        # gene_dict = OrderedDict()
-        # for g in tqdm(genes, disable=disable_progress_bar):
-        #     gene_dict[g] = self.weight_db.get_variants_of_gene(g)
-        # return gene_dict
-    def _check_in_ref_geno(self, df_gene_var):
+    def _get_variants_per_gene(self, genes, df_gwas_snp=None, disable_progress_bar=False):
+        variants_per_gene = self.weight_db.get_variants_of_gene(genes)
+        if df_gwas_snp is not None:
+            gwas_snp = snpinfo_to_snpid(
+                df_gwas_snp.chrom, 
+                df_gwas_snp.position, 
+                df_gwas_snp.effect_allele, df_gwas_snp.non_effect_allele,
+                allow_ambi=True
+            )
+            db_snp = snpinfo_to_snpid(
+                variants_per_gene.chrom,
+                variants_per_gene.position, 
+                variants_per_gene.effect_allele, variants_per_gene.non_effect_allele,
+                allow_ambi=True
+            )
+            snp_both = intersect_two_lists(gwas_snp.snpid, db_snp.snpid)
+            db_snp_in_both_idx = db_snp[ db_snp.snpid.isin(snp_both) ].idx
+            variants_per_gene = variants_per_gene[ db_snp_in_both_idx ].reset_index(drop=True)
+        return variants_per_gene
+    def _check_in_ref_geno_cov(self, df_gene_var):
         out_meta = []
         
-        snp_all = set(self.geno_bed.get_snplist().snpid)
+        snp_all = set(self.geno_cov.get_snplist().snpid)
         
-        # annotate df_gene_var with snpid and direction (remove ambiguious snps)
-        # and intersect with snp_all (snps from genotype)
+        # annotate df_gene_var with snpid and direction
+        # and intersect with snp_all (snps from geno cov)
         df_var = df_gene_var[self.snp_cols].drop_duplicates()
         vars_ = snpinfo_to_snpid(
             df_var.chrom, df_var.position, 
             df_var.effect_allele, df_var.non_effect_allele, 
-            return_complete=True
+            return_complete=True,
+            allow_ambi=True
         )
         df_var = df_var.iloc[ vars_.idx, : ].reset_index(drop=True)
         df_var['snpid'] = vars_.snpid
@@ -140,15 +153,24 @@ class Solver:
             tmp[ np.isnan(tmp) ] = 0
             tmp = tmp * df_var.direction.values
             weight_mat[ :, idx ] = tmp
-                    
-        geno = self.geno_bed.load(df_var.snpid)
-        geno = mean_center_col_2d_jax(geno)
-        GxW = geno @ weight_mat
-        cov_pe = GxW.T @ GxW
+        df_weight = pd.DataFrame(weight_mat)
+        weight_value_cols = list(df_gene.gene)
+        df_weight.columns = weight_value_cols
+        df_weight = pd.concat([df_var, df_weight], axis=0)
+        df_weight.rename(
+            columns={
+                'chrom': 'chr', 'position': 'pos', 
+                'effect_allele': 'alt', 'non_effect_allele': 'ref'
+            }, 
+            inplace=True
+        )
+        
+        covpe = self.geno_cov.matmul_xt_cov_x(df_weight, weight_value_cols)
         var_pe = cov_pe.diagonal()
         sqrt_var_pe = np.sqrt(var_pe)
         R = np.array(diag_mul_mat(1 / sqrt_var_pe, mat_mul_diag(cov_pe, 1 / sqrt_var_pe)))
-        return R, var_pe, list(df_gene.gene)
+        return R, var_pe, weight_value_cols
+        
     def fit_ptrs(self, alpha=0.5, offset=0, nlambda=100, ratio_lambda=100, tol=1e-5, maxiter=1000):
         # rescale offset to eff_offset 
         # so that we fit A + eff_offset * I 

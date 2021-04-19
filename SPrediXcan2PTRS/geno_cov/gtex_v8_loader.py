@@ -14,14 +14,7 @@ COMPLEMENT_BASE = {
 }
 VARID_SEP = '_'
 
-def get_complement(str_):
-    o = ''
-    for s in str_:
-        char_ = s.upper()
-        if char_ not in COMPLEMENT_BASE:
-            raise ValueError(f'Wrong s in str_: s = {s}.')
-        o += COMPLEMENT_BASE[char_]
-    return o
+from transethnic_prs.util.genotype_io import get_complement
 
 
 class TargetSNP:
