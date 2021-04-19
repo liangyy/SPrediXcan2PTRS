@@ -22,8 +22,8 @@ genotype=/gpfs/data/gtex-group/v8/59348/gtex/exchange/GTEx_phs000424/exchange/an
 predictdb=/gpfs/data/im-lab/nas40t2/abarbeira/projects/gtex_v8/models_v1/eqtl/elastic_net_models/en_$TISSUE.db
 
 # output
-# outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/geno_cov/gtex_v8
-outdir=/gpfs/data/im-lab/nas40t2/yanyul/SPrediXcan2PTRS/geno_cov/gtex_v8
+outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/geno_cov/gtex_v8
+# outdir=/gpfs/data/im-lab/nas40t2/yanyul/SPrediXcan2PTRS/geno_cov/gtex_v8
 prefix=en_$TISSUE.geno_cov
 
 cd ${PBS_O_WORKDIR}
