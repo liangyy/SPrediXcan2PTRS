@@ -70,7 +70,8 @@ if __name__ == '__main__':
     for chr_num in range(1, 23):
         output_prefix = '{}.chr{}'.format(args.output_prefix, chr_num)
         target_file = f'{output_prefix}.{out_ext}'
-        if file_exists(target_file):
+        snp_meta_file = f'{output_prefix}.snp_meta.parquet'
+        if file_exists(target_file) and file_exists(snp_meta_file):
             logging.info(f'Target file exists for chromosome {chr_num}.')
             continue
         logging.info(f'Extracting SNPs on chromosome {chr_num}.')
@@ -84,7 +85,7 @@ if __name__ == '__main__':
             param
         )
         logging.info(f'Saving SNP meta for chromosome {chr_num}.')
-        tmp[1].to_parquet(output_prefix + 'snp_meta.parquet', index=False)
+        tmp[1].to_parquet(snp_meta_file, index=False)
     
     logging.info('Done.') 
        
