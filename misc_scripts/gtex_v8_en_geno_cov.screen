@@ -1,5 +1,7 @@
 # ARGS1: TISSUE
 
+TISSUE=$1
+
 # environment setup
 source /vol/bmd/yanyul/miniconda3/etc/profile.d/conda.sh
 conda activate SPrediXcan2PTRS
@@ -18,7 +20,7 @@ predictdb=/vol/bmd/yanyul/data/gtex_v8_pred_models/eqtl/elastic_net_models/en_$T
 outdir=/vol/bmd/yanyul/data/SPrediXcan2PTRS/geno_cov/gtex_v8
 prefix=en_$TISSUE.geno_cov
 
-cd ${PBS_O_WORKDIR}
+mkdir -p gtex_v8_en_geno_cov
 
 python $gen_script \
   --genotype_vcf $genotype \
