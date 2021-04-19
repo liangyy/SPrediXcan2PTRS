@@ -6,12 +6,6 @@ import pandas as pd
 import numpy as np
 # from tqdm import tqdm
 
-COMPLEMENT_BASE = {
-    'A': 'T',
-    'G': 'C',
-    'T': 'A',
-    'C': 'G'
-}
 VARID_SEP = '_'
 
 from transethnic_prs.util.genotype_io import get_complement
