@@ -1,0 +1,29 @@
+# ARGS1: TISSUE
+
+# environment setup
+source /vol/bmd/yanyul/miniconda3/etc/profile.d/conda.sh
+conda activate SPrediXcan2PTRS
+
+# load extra python dependency
+export PYTHONPATH=/vol/bmd/yanyul/GitHub/SPrediXcan2PTRS
+
+# script path 
+gen_script=/vol/bmd/yanyul/GitHub/SPrediXcan2PTRS/generate_gtex_v8_geno_cov.py
+
+# input data
+genotype=/vol/bmd/yanyul/UKB/GTExV8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.MAF01.vcf.gz
+predictdb=/vol/bmd/yanyul/data/gtex_v8_pred_models/eqtl/elastic_net_models/en_$TISSUE.db
+
+# output
+outdir=/vol/bmd/yanyul/data/SPrediXcan2PTRS/geno_cov/gtex_v8
+prefix=en_$TISSUE.geno_cov
+
+cd ${PBS_O_WORKDIR}
+
+python $gen_script \
+  --genotype_vcf $genotype \
+  --predictdb $predictdb \
+  --mode banded 500 \
+  --output_prefix $outdir/$prefix > \
+  gtex_v8_en_geno_cov/$TISSUE.log 2>&1
+  
