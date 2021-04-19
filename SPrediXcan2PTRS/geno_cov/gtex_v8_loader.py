@@ -6,22 +6,9 @@ import pandas as pd
 import numpy as np
 # from tqdm import tqdm
 
-COMPLEMENT_BASE = {
-    'A': 'T',
-    'G': 'C',
-    'T': 'A',
-    'C': 'G'
-}
 VARID_SEP = '_'
 
-def get_complement(str_):
-    o = ''
-    for s in str_:
-        char_ = s.upper()
-        if char_ not in COMPLEMENT_BASE:
-            raise ValueError(f'Wrong s in str_: s = {s}.')
-        o += COMPLEMENT_BASE[char_]
-    return o
+from transethnic_prs.util.genotype_io import get_complement
 
 
 class TargetSNP:
@@ -100,6 +87,10 @@ class GTExV8GenoLoader:
         geno_mat = []
         for kk in self.vcf(region):
             ch, pos, ref, alt = kk.CHROM, kk.POS, kk.REF, kk.ALT
+            if len(alt) > 1:
+                continue
+            else:
+                alt = alt[0]
             kk_key = snp_target.gen_chrpos(ch, pos)
             snpi, direction = snp_target.get_snp(kk_key, ref, alt)
             if snpi is None:

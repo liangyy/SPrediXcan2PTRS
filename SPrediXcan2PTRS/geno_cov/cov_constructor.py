@@ -1,5 +1,14 @@
+from collections import OrderedDict
+import re
+
 import numpy as np
+import pandas as pd
 from scipy.sparse import coo_matrix, save_npz, load_npz
+
+from transethnic_prs.util.genotype_io import snpinfo_to_snpid
+
+
+CHRNUM_WILDCARD = '{chr_num}'
 
 class CovConstructor:
     def __init__(self, data, nbatch=10):
@@ -127,6 +136,134 @@ class CovConstructor:
         )
         save_npz(fn, cov_coo)    
 
+class GenoCov:
+    def __init__(self, fn, chromosomes=None):
+        self._set_chromosomes(fn, chromosomes)
+        self._load_cov_meta(fn)
+        self._load_cov_mat(fn)
+    def _set_chromosomes(self, fn, chrs):
+        if CHRNUM_WILDCARD in fn:
+            if chrs is None:
+                self.chromosomes = [ i for i in range(1, 23) ]
+            else:
+                self.chromosomes = chrs
+        else:
+            self.chromosomes = None
+    @staticmethod
+    def _add_snpid(df_snp):
+        df_snp_more = snpinfo_to_snpid(
+            df_snp.chr, df_snp.pos, df_snp.ref, df_snp.alt, 
+            allow_ambi=True
+        )
+        if df_snp.shape[0] != df_snp_more.shape[0]:
+            raise ValueError('df_snp before and after adding SNPID have different number of rows.')
+        df_snp['snpid'] = df_snp_more.snpid
+        df_snp['direction'] = df_snp_more.direction
+        return df_snp
+    def _load_snp_meta(self, snp_meta_file):
+        snp_tmp = pd.read_parquet(snp_meta_file)
+        snp_tmp.chr = [ int(re.sub('chr', '', i)) for i in snp_tmp.chr ]
+        snp_tmp = self._add_snpid(snp_tmp)
+        return snp_tmp
+    @staticmethod
+    def _get_snp_meta_fn(fn_cov_mat):
+        fn = '.'.join(fn_cov_mat.split('.')[:-2])
+        return fn + '.snp_meta.parquet'
+    def _load_cov_meta(self, fn):
+        if self.chromosomes is None:
+            fn = self._get_snp_meta_fn(fn)
+            self.snp_meta = self._load_snp_meta(fn)
+        else:
+            o = OrderedDict()
+            fn = self._get_snp_meta_fn(fn)
+            for i in self.chromosomes:
+                o[i] = self._load_snp_meta(fn.format(chr_num=i))
+            self.snp_meta = o
+    def _load_cov_mat(self, fn):
+        if self.chromosomes is None:
+            self.cov_mat = CovMatrix(fn)
+        else:
+            o = OrderedDict()
+            for i in self.chromosomes:
+                o[i] = CovMatrix(fn.format(chr_num=i))
+            self.cov_mat = o
+    def get_snplist(self):
+        if isinstance(self.snp_meta, OrderedDict):
+            snp = []
+            for _, v in self.snp_meta.items():
+                snp.append(v)
+            return pd.concat(snp, axis=0)
+        else:
+            return self.snp_meta
+    def _rearrage_df_by_target(df, target, value_cols):
+        if 'snpid' in df.columns and 'direction' in df.columns:
+            pass
+        else:
+            df = self._add_snpid(df)
+        res = pd.merge(target, df[['snpid', 'direction'] + value_cols], on='left', by='snpid').reset_index(drop=True)
+        res.fillna(0, inplace=True)
+        res[value_cols] = res[value_cols].values * (res.direction_x.values * res.direction_y.values)[:, np.newaxis]
+        res = res.drop(columns=['direction_y']).rename(columns={'direction_x': 'direction'})
+        return res
+    def rearrange_df(self, df_snp, value_cols):
+        '''
+        re-arrange df_snp so that df_snp has SNPs in the same order of 
+        self.snp_meta/self.cov_mat. 
+        Match both chr:pos, the alleles, and the allele direction. 
+        Fill 0 for the missing SNPs (in snp_meta but not df_snp).
+        Drop SNPs if they do not show up in snp_meta.
+        Return df_snp in an OrderedDict if self.chromosomes is not None.
+        df_snp = pd.DataFrame({
+            'chr', 'pos', 'ref', 'alt',
+            'snpid' (optional), 'direction' (optional)
+        })
+        '''
+        if self.chromosomes is not None:
+            chrs = df_snp.chr.unique()
+            o = OrderedDict()
+            for cc in chrs:
+                if cc not in self.chromosomes:
+                    continue
+                snp_meta = self.snp_meta[cc]
+                df_snp_sub = df_snp[ df_snp.chrom == cc ].reset_index(drop=True)
+                df_snp_sub = self._rearrage_df_by_target(
+                    df=df_snp_sub, 
+                    target=snp_meta, 
+                    value_cols=value_cols
+                )
+                o[cc] = df_snp_sub
+            return o
+        else:
+            df_snp = self._rearrage_df_by_target(
+                df=df_snp, 
+                target=self.snp_meta, 
+                value_cols=value_cols
+            )
+            return df_snp
+    def matmul_xt_cov_x(self, df, value_cols):
+        '''
+        Evaluate X.T @ Cov @ X, where X = df[value_cols].
+        Procedure:
+        1. Call rearrange_df(df, value_cols) to make df have the same list of SNPs 
+        (in the same order and direction) as cov.
+        2. Evaluate matmal. 
+        '''
+        df_reordered = self.rearrange_df(df, value_cols)
+        if self.chromosomes is not None:
+            res_eval = np.zeros((len(values_cols), len(values_cols)))
+            for cc in self.chromosomes:
+                if cc not in df_reordered:
+                    continue
+                else:
+                    x = df_reordered[value_cols].values
+                    cov_x = self.cov_mat.eval_matmul_on_left(x)
+                    res_eval += x.T @ cov_x
+        else:
+            x = df_reordered[value_cols].values
+            cov_x = self.cov_mat.eval_matmul_on_left(x)
+            res_eval = x.T @ cov_x
+        return res_eval
+        
 class CovMatrix:
     def __init__(self, fn):
         self.fn = fn
