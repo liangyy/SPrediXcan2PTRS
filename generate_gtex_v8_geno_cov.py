@@ -83,6 +83,8 @@ if __name__ == '__main__':
             output_prefix, 
             param
         )
+        logging.info(f'Saving SNP meta for chromosome {chr_num}.')
+        tmp[1].to_parquet(output_prefix + 'snp_meta.parquet', index=False)
     
     logging.info('Done.') 
        
