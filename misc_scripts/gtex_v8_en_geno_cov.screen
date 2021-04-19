@@ -12,7 +12,7 @@ export PYTHONPATH=/vol/bmd/yanyul/GitHub/transethnic_prs
 gen_script=/vol/bmd/yanyul/GitHub/SPrediXcan2PTRS/generate_gtex_v8_geno_cov.py
 
 # input data
-genotype=/vol/bmd/yanyul/UKB/GTExV8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.MAF01.vcf.gz
+genotype=/vol/bmd/yanyul/UKB/GTExV8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz
 predictdb=/vol/bmd/yanyul/data/gtex_v8_pred_models/eqtl/elastic_net_models/en_$TISSUE.db
 
 # output

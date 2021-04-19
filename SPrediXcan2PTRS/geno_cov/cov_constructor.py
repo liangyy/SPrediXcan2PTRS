@@ -2,12 +2,13 @@ from collections import OrderedDict
 import re
 
 import numpy as np
+import pandas as pd
 from scipy.sparse import coo_matrix, save_npz, load_npz
 
 from transethnic_prs.util.genotype_io import snpinfo_to_snpid
 
 
-CHRNUM_WILDCARD='{chr_num}'
+CHRNUM_WILDCARD = '{chr_num}'
 
 class CovConstructor:
     def __init__(self, data, nbatch=10):
@@ -137,7 +138,7 @@ class CovConstructor:
 
 class GenoCov:
     def __init__(self, fn, chromosomes=None):
-        self._set_chromosomes(chromosomes)
+        self._set_chromosomes(fn, chromosomes)
         self._load_cov_meta(fn)
         self._load_cov_mat(fn)
     def _set_chromosomes(self, fn, chrs):
@@ -159,21 +160,22 @@ class GenoCov:
         df_snp['snpid'] = df_snp_more.snpid
         df_snp['direction'] = df_snp_more.direction
         return df_snp
-    @staticmethod
-    def _load_snp_meta(snp_meta_file):
-        snp_tmp = pd.read_parquet(fn)
-        snp_tmp.chr = [ int(re.sub('chr', '', i)) for tmp.chr ]
+    def _load_snp_meta(self, snp_meta_file):
+        snp_tmp = pd.read_parquet(snp_meta_file)
+        snp_tmp.chr = [ int(re.sub('chr', '', i)) for i in snp_tmp.chr ]
         snp_tmp = self._add_snpid(snp_tmp)
         return snp_tmp
+    @staticmethod
+    def _get_snp_meta_fn(fn_cov_mat):
+        fn = '.'.join(fn_cov_mat.split('.')[:-2])
+        return fn + '.snp_meta.parquet'
     def _load_cov_meta(self, fn):
         if self.chromosomes is None:
-            fn = '.'.join(fn.split('.')[:-1])
-            fn = fn + '.snp_meta.parquet'
+            fn = self._get_snp_meta_fn(fn)
             self.snp_meta = self._load_snp_meta(fn)
         else:
             o = OrderedDict()
-            fn = '.'.join(fn.split('.')[:-1])
-            fn = fn + '.snp_meta.parquet'
+            fn = self._get_snp_meta_fn(fn)
             for i in self.chromosomes:
                 o[i] = self._load_snp_meta(fn.format(chr_num=i))
             self.snp_meta = o
@@ -217,7 +219,7 @@ class GenoCov:
         })
         '''
         if self.chromosomes is not None:
-            chrs = df_snp.chrom.unique()
+            chrs = df_snp.chr.unique()
             o = OrderedDict()
             for cc in chrs:
                 if cc not in self.chromosomes:

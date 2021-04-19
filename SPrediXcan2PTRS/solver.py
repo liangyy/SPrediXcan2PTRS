@@ -10,7 +10,7 @@ from transethnic_prs.util.genotype_io import snpinfo_to_snpid
 from transethnic_prs.util.math import diag_mul_mat, mat_mul_diag
 
 class Solver:
-    def __init__(self, df_pxcan, sample_size, weight_db, geno_cov, df_gwas=None, gene_list=None, lazy=False, show_progress_bar=False):
+    def __init__(self, df_pxcan, sample_size, weight_db, geno_cov, df_gwas_snp=None, gene_list=None, lazy=False, show_progress_bar=False):
         '''
         Inputs:
             1. df_pxcan: pd.DataFrame({'gene': gene, 'zscore': zscore})
@@ -95,7 +95,7 @@ class Solver:
             )
             snp_both = intersect_two_lists(gwas_snp.snpid, db_snp.snpid)
             db_snp_in_both_idx = db_snp[ db_snp.snpid.isin(snp_both) ].idx
-            variants_per_gene = variants_per_gene[ db_snp_in_both_idx ].reset_index(drop=True)
+            variants_per_gene = variants_per_gene.iloc[ db_snp_in_both_idx, : ].reset_index(drop=True)
         return variants_per_gene
     def _check_in_ref_geno_cov(self, df_gene_var):
         out_meta = []
