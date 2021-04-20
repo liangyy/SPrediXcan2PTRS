@@ -32,7 +32,7 @@ cd ${PBS_O_WORKDIR}
 python $gen_script \
   --genotype_vcf $genotype \
   --predictdb $predictdb \
-  --mode banded 500 \
+  --mode cap 1e-2 \
   --output_prefix $outdir/$prefix > \
   gtex_v8_en_geno_cov/$TISSUE.${PBS_JOBID}.log 2>&1
   

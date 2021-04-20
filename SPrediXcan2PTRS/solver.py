@@ -156,7 +156,7 @@ class Solver:
         df_weight = pd.DataFrame(weight_mat)
         weight_value_cols = list(df_gene.gene)
         df_weight.columns = weight_value_cols
-        df_weight = pd.concat([df_var, df_weight], axis=0)
+        df_weight = pd.concat([df_var.reset_index(drop=True), df_weight], axis=1)
         df_weight.rename(
             columns={
                 'chrom': 'chr', 'position': 'pos', 
@@ -165,7 +165,7 @@ class Solver:
             inplace=True
         )
         
-        covpe = self.geno_cov.matmul_xt_cov_x(df_weight, weight_value_cols)
+        cov_pe = self.geno_cov.matmul_xt_cov_x(df_weight, weight_value_cols)
         var_pe = cov_pe.diagonal()
         sqrt_var_pe = np.sqrt(var_pe)
         R = np.array(diag_mul_mat(1 / sqrt_var_pe, mat_mul_diag(cov_pe, 1 / sqrt_var_pe)))
@@ -176,19 +176,19 @@ class Solver:
         # so that we fit A + eff_offset * I 
         # instead of (1 - offset) A + offset * I
         eff_offset = offset / (1 - offset)
-        beta, lambda_, niter, tol = self.model1_blk.solve_path(
+        beta, lambda_, niter, tol, conv = self.model1_blk.solve_path(
             alpha=alpha, offset=eff_offset, tol=tol, maxiter=maxiter, nlambda=nlambda, ratio_lambda=ratio_lambda
         )
         # need to rescale lambda_
-        return beta, lambda_ * (1 - offset), niter, tol
+        return beta, lambda_ * (1 - offset), niter, tol, conv
     def fit_ptrs_by_blk(self, alpha=0.5, offset=0, nlambda=100, ratio_lambda=100, tol=1e-5, maxiter=1000):
         # rescale offset to eff_offset 
         # so that we fit A + eff_offset * I 
         # instead of (1 - offset) A + offset * I
         eff_offset = offset / (1 - offset)
-        beta, lambda_, niter, tol = self.model1_blk.solve_path_by_blk(
+        beta, lambda_, niter, tol, conv = self.model1_blk.solve_path_by_blk(
             alpha=alpha, offset=eff_offset, tol=tol, maxiter=maxiter, nlambda=nlambda, ratio_lambda=ratio_lambda
         )
         # need to rescale lambda_
-        return beta, lambda_ * (1 - offset), niter, tol
+        return beta, lambda_ * (1 - offset), niter, tol, conv
     

@@ -195,12 +195,12 @@ class GenoCov:
             return pd.concat(snp, axis=0)
         else:
             return self.snp_meta
-    def _rearrage_df_by_target(df, target, value_cols):
+    def _rearrage_df_by_target(self, df, target, value_cols):
         if 'snpid' in df.columns and 'direction' in df.columns:
             pass
         else:
             df = self._add_snpid(df)
-        res = pd.merge(target, df[['snpid', 'direction'] + value_cols], on='left', by='snpid').reset_index(drop=True)
+        res = pd.merge(target, df[['snpid', 'direction'] + value_cols], how='left', on='snpid').reset_index(drop=True)
         res.fillna(0, inplace=True)
         res[value_cols] = res[value_cols].values * (res.direction_x.values * res.direction_y.values)[:, np.newaxis]
         res = res.drop(columns=['direction_y']).rename(columns={'direction_x': 'direction'})
@@ -225,7 +225,7 @@ class GenoCov:
                 if cc not in self.chromosomes:
                     continue
                 snp_meta = self.snp_meta[cc]
-                df_snp_sub = df_snp[ df_snp.chrom == cc ].reset_index(drop=True)
+                df_snp_sub = df_snp[ df_snp.chr == cc ].reset_index(drop=True)
                 df_snp_sub = self._rearrage_df_by_target(
                     df=df_snp_sub, 
                     target=snp_meta, 
@@ -250,13 +250,13 @@ class GenoCov:
         '''
         df_reordered = self.rearrange_df(df, value_cols)
         if self.chromosomes is not None:
-            res_eval = np.zeros((len(values_cols), len(values_cols)))
+            res_eval = np.zeros((len(value_cols), len(value_cols)))
             for cc in self.chromosomes:
                 if cc not in df_reordered:
                     continue
                 else:
-                    x = df_reordered[value_cols].values
-                    cov_x = self.cov_mat.eval_matmul_on_left(x)
+                    x = df_reordered[cc][value_cols].values
+                    cov_x, _ = self.cov_mat[cc].eval_matmul_on_left(x)
                     res_eval += x.T @ cov_x
         else:
             x = df_reordered[value_cols].values

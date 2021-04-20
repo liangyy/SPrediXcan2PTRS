@@ -7,7 +7,7 @@ def load_mode(mode_list):
         if len(mode_list) != 2:
             raise ValueError('Wrong number of parameters for mode.')
         if mode_list[0] == 'cap':
-            param = int(mode_list[1])
+            param = float(mode_list[1])
             ext = 'cap.npz'
         elif mode_list[0] == 'banded':
             param = float(mode_list[1])
