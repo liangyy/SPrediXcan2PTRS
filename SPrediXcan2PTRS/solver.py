@@ -10,7 +10,7 @@ from transethnic_prs.util.genotype_io import snpinfo_to_snpid
 from transethnic_prs.util.math import diag_mul_mat, mat_mul_diag
 
 class Solver:
-    def __init__(self, df_pxcan, sample_size, weight_db, geno_cov, df_gwas_snp=None, gene_list=None, lazy=False, show_progress_bar=False):
+    def __init__(self, df_pxcan, weight_db, geno_cov, df_gwas_snp=None, gene_list=None, lazy=False, show_progress_bar=False):
         '''
         Inputs:
             1. df_pxcan: pd.DataFrame({'gene': gene, 'zscore': zscore})
@@ -19,7 +19,7 @@ class Solver:
                           # from prediction model weights in PredictDB sqlite3 format
             3. geno_cov: GenoCov object 
                              (see SPrediXcan2PTRS/geno_cov/cov_constructor.py)
-            4. df_gwas_snp: pd.DataFrame({'chrom', 'position', 'effect_allele', 'non_effect_allele'}) showing the SNPs being included in GWAS.
+            4. df_gwas_snp: pd.DataFrame({'chrom', 'position', 'effect_allele', 'non_effect_allele', 'sample_size'}) showing the SNPs being included in GWAS.
         Outputs:
             self.R = predicted gene correlation matrix
             self.z = PrediXcan z-score
