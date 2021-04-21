@@ -1,7 +1,7 @@
 import os
 
 def load_mode(mode_list):
-    if mode_list[0] not in ['naive', 'cap', 'banded']:
+    if mode_list[0] not in ['naive', 'cap', 'banded', 'evd']:
         raise ValueError('Wrong mode.')
     else:
         if len(mode_list) != 2:
@@ -12,6 +12,9 @@ def load_mode(mode_list):
         elif mode_list[0] == 'banded':
             param = float(mode_list[1])
             ext = 'banded.npz'
+        elif mode_list[0] == 'evd':
+            param = float(mode_list[1])
+            ext = 'evd.npz'
         elif mode_list[0] == 'naive':
             ext = 'naive.h5'
             if mode_list[1] == 'f32':
@@ -42,7 +45,8 @@ if __name__ == '__main__':
         Indicate the mode and parameter of the mode for genotype covariance:
         1. banded [band-size]; 
         2. cap [threshold-of-cap];
-        3. naive [f32|f64].
+        3. naive [f32|f64];
+        4. evd [min-max-threshold]. 
     ''')
     parser.add_argument('--output_prefix', help='''
         Output prefix.
