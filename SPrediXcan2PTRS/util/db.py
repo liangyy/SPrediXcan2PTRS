@@ -38,6 +38,8 @@ class WeightDB:
         df = pd.merge(df, self.df_var, on='varID')
         cols = ['gene', 'chrom', 'position', 'effect_allele', 'non_effect_allele', 'weight']
         return df[cols].copy()
+    def get_nsnp_per_gene(self):
+        return self.df_weight.value_counts(subset=['gene']).reset_index()
     def get_gene_info(self):
         query = "select gene from extra"
         df = pd.read_sql_query(query, self.conn)

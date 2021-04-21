@@ -1,8 +1,11 @@
 from collections import OrderedDict
 
 import pandas as pd
+import numpy as np
+import h5py
 
 import SPrediXcan2PTRS.util.misc as mi
+import SPrediXcan2PTRS.util.liftover as lo
 
 DEFAULT_PARAMS = OrderedDict([
     ('alpha', [ 1. ]),
@@ -15,9 +18,52 @@ DEFAULT_PARAMS = OrderedDict([
 
 def save_result(f, grp_name, value_dict):
     grp = f.create_group(grp_name)
+    
     for k, v in value_dict.items():
-        grp.create_dataset(k, v, dtype='f')
+        if k in ['betahat', 'lambda_seq']:
+            grp.create_dataset(k, data=v)
+        elif k in ['alpha', 'offset']:
+            grp.attrs[k] = v
 
+def load_gwas_snp(args_gwas, liftover_chain=None):
+    if len(args_gwas) != 5:
+        raise ValueError('Expect 5 values in --gwas but get {}'.format(len(args_gwas)))
+    fn = args_gwas[0]
+    df = mi.read_table(fn)
+    
+    rename_pairs = OrderedDict()
+    expected = [ 'chromosome', 'position', 'effect_allele', 'non_effect_allele' ]
+    for v in args_gwas[1:]:
+        v = v.split(':')
+        if v[0] not in expected:
+            raise ValueError(f'We do not expect {v[0]} in --gwas.')
+        if v[0] in key_val_pairs:
+            raise ValueError(f'Duplicated {v[0]}.')
+        if v[1] not in df.columns:
+            raise ValueError(f'{v[1]} not in GWAS table.')
+        rename_pairs[v[1]] = v[0]
+    
+    df.rename(columns=rename_pairs, inplace=True)
+    
+    df = df[expected].copy()
+    
+    if liftover_chain is not None:
+        tmp = lo.liftover(df.chromosome, df.position, liftover_chain)
+        df.chromosome = tmp.liftover_chr
+        df.position = tmp.liftover_pos
+    
+    df.chromosome = [ int(re.sub('chr', '', i)) for i in df.chromosome ]
+    df.position = df.position.astype(int)
+    
+    df.rename(columns={
+        'chromosome': 'chrom',
+    }, inplace=True)
+    
+    return df
+    
+    
+    
+    
 
 def load_params(fn_yaml=None):
     if fn_yaml is None:
@@ -76,6 +122,11 @@ if __name__ == '__main__':
             effect_allele:a1 \\
             non_effect_allele: a2 
     ''')
+    parser.add_argument('--liftover_chain', default=None, help='''
+        If specified, we will liftover GWAS. \\
+        Note that we expect GWAS and predictDB use the same genome assembly version \\
+        since we match SNPs by position.
+    ''')
     parser.add_argument('--gwas_sample_size', type=int, help='''
         GWAS sample size. \\
         We use it as the sample size for running PTRS fitting.
@@ -131,11 +182,11 @@ if __name__ == '__main__':
     logging.info('Initializing the solver.')
     solver = so.Solver(
         df_pxcan=df_pxcan[['gene', 'zscore']].copy(),
+        sample_size=args.gwas_sample_size
         weight_db=weight,
         geno_cov=geno_cov, 
-        df_gwas_snp=df_gwas[['chrom', 'position', 'effect_allele', 'non_effect_allele', 'sample_size']].copy(),
-        lazy=True,
-        gene_list=genes    
+        df_gwas_snp=df_gwas[['chrom', 'position', 'effect_allele', 'non_effect_allele']].copy(),
+        lazy=True  
     )
     
     logging.info('Building gene covariances.')
@@ -148,7 +199,7 @@ if __name__ == '__main__':
         )
     )
     solver.init_model1blk()
-    output_handle = h5py.File(args.output, 'w')
+    output_handle = h5py.File(args.output_prefix + '.results.h5', 'w')
     result_id = 0
     for ia, alpha in enumerate(alphas):
         for io, offset in enumerate(offsets):
@@ -179,6 +230,15 @@ if __name__ == '__main__':
                 ])
             )
             result_id += 1
+    
+    logging.info('Saving other meta information.')
+    output_handle.create_dataset('genes', data=solver.genes)
+    solver.gene_meta.to_csv(
+        args.output_prefix + 'gene_meta.tsv.gz', 
+        index=False, compression='gzip', sep='\t'
+    )
+    
+    # one more clean up
     output_handle.close()
     
     logging.info('Done.')    

@@ -43,7 +43,7 @@ class Solver:
         self.db_df_gene_var, self.gene_meta = self._check_in_ref_geno_cov(
             db_df_gene_var
         )
-        self.gene_w_vars = list(self.gene_meta[ self.gene_meta.nsnp_in_ref > 0 ].gene)
+        self.gene_w_vars = list(self.gene_meta[ self.gene_meta.nsnp_in_db_n_gwas_n_geno_cov > 0 ].gene)
         if lazy is True:
             return 
         self._build_cor(genes=self.gene_w_vars, show_progress_bar=show_progress_bar)
@@ -119,7 +119,10 @@ class Solver:
         df_meta = df_gene_var.value_counts(subset=['gene']).reset_index()
         df_meta2 = df_gene_var_new.value_counts(subset=['gene']).reset_index()
         df_meta = pd.merge(df_meta, df_meta2, on='gene', how='left').fillna(0)
-        df_meta.rename(columns={'0_x': 'nsnp_in_db', '0_y': 'nsnp_in_ref'}, inplace=True)
+        df_meta.rename(columns={'0_x': 'nsnp_in_db_n_gwas', '0_y': 'nsnp_in_db_n_gwas_n_geno_cov'}, inplace=True)
+        df_meta0 = self.weight_db.get_nsnp_per_gene()
+        df_meta = pd.merge(df_meta0, df_meta, on='gene', how='left').fillna(0)
+        df_meta.rename(columns={'0': 'nsnp_in_db'})
         df_gene_var_new.chrom = df_gene_var_new.chrom.astype(int)
         df_gene_var_new.position = df_gene_var_new.position.astype(int)
         return df_gene_var_new, df_meta
