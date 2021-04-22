@@ -18,6 +18,8 @@ DEFAULT_PARAMS = OrderedDict([
     ('tol', 1e-5)
 ])
 
+GWAS_COL_SEP = '='
+
 def save_result(f, grp_name, value_dict):
     grp = f.create_group(grp_name)
     
@@ -34,10 +36,7 @@ def load_gwas_snp(args_gwas, args_gwas_cols, liftover_chain=None):
     expected = [ 'chromosome', 'position', 'effect_allele', 'non_effect_allele' ]
     exp_patterns = [ '{' + v + '}' for v in expected ]
     for col in args_gwas_cols:
-        tmp = col.split('=')
-        if len(tmp) != 2:
-            raise ValueError(f'Wrong format in --gwas_cols: {col}')
-        col_in_table, target_col_pattern = tmp[0], tmp[1]
+        col_in_table, target_col_pattern = mi.try_parse_gwas_col(col, sep=GWAS_COL_SEP)
         if col_in_table not in df.columns:
             raise ValueError(f'Column {col_in_table} is not in GWAS table.')
         if '{' in target_col_pattern and '}':
@@ -115,23 +114,23 @@ if __name__ == '__main__':
     ''')
     parser.add_argument('--gwas', help='''
         The GWAS file being used for (S)PrediXcan analysis. \\
-        We need this since we want to use the same SNPs as the ones used in (S)PrediXcan. \\
+        We need this since we want to use the same SNPs as the ones used in (S)PrediXcan. 
     ''')
-    parser.add_argument('--gwas_cols', nargs='+', help='''
+    parser.add_argument('--gwas_cols', nargs='+', help=f'''
         Specify the columns in GWAS table. \\
         Expect 4 columns: chromosome, position, effect_allele, non_effect_allele \\
         For instance: \\
             --gwas_cols \\
-            chr=chromosome=chr \\
-            pos=position:pos \\
-            a1=effect_allele \\
-            a2=non_effect_allele \\
-        If want to do some parsing on column KK, do KK={chromosome}:{position}. \\
+            chr{GWAS_COL_SEP}chromosomechr \\
+            pos{GWAS_COL_SEP}position:pos \\
+            a1{GWAS_COL_SEP}effect_allele \\
+            a2{GWAS_COL_SEP}non_effect_allele \\
+        If want to do some parsing on column KK, do KK={{chromosome}}:{{position}}. \\
         Another example: \\
             --gwas_cols \\
-            KK={chromosome}:{position} \\
-            a1=effect_allele \\
-            a2=non_effect_allele \\
+            KK{GWAS_COL_SEP}{{chromosome}}:{{position}} \\
+            a1{GWAS_COL_SEP}effect_allele \\
+            a2{GWAS_COL_SEP}non_effect_allele 
     ''')
     parser.add_argument('--liftover_chain', default=None, help='''
         If specified, we will liftover GWAS. \\
@@ -245,7 +244,7 @@ if __name__ == '__main__':
     logging.info('Saving other meta information.')
     output_handle.create_dataset('genes', data=np.concatenate(solver.genes).astype('S'))
     solver.gene_meta.to_csv(
-        args.output_prefix + 'gene_meta.tsv.gz', 
+        args.output_prefix + '.gene_meta.tsv.gz', 
         index=False, compression='gzip', sep='\t'
     )
     

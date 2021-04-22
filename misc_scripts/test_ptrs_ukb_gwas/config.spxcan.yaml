@@ -22,6 +22,7 @@ full_extra_command:  # these will be appended to the script call
   - '--chromosome_format'  # manually add this flag to add chr to chr_col
   - '-meta_extra_col rsid:6'
   - "-split_column variant ':' chromosome position"
+  - '-output_column_map variant variant'
 
 # for S-PrediXcan
 spredixcan_extra_command: 

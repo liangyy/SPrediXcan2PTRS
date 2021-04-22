@@ -122,7 +122,7 @@ class Solver:
         df_meta.rename(columns={'0_x': 'nsnp_in_db_n_gwas', '0_y': 'nsnp_in_db_n_gwas_n_geno_cov'}, inplace=True)
         df_meta0 = self.weight_db.get_nsnp_per_gene()
         df_meta = pd.merge(df_meta0, df_meta, on='gene', how='left').fillna(0)
-        df_meta.rename(columns={'0': 'nsnp_in_db'})
+        df_meta.rename(columns={0: 'nsnp_in_db'})
         df_gene_var_new.chrom = df_gene_var_new.chrom.astype(int)
         df_gene_var_new.position = df_gene_var_new.position.astype(int)
         return df_gene_var_new, df_meta

@@ -122,4 +122,11 @@ def parse_and_update_gwas_col(cols_dict, col, pattern):
             res = tmp.groupdict()
         for k, v in res.items():
             cols_dict[k].append(res[k])      
-    
+def try_parse_gwas_col(col, sep):
+    kk = col.split(sep)
+    if len(kk) < 2:
+        raise ValueError('Fail to parse, need to contain :.')
+    ff = kk[0]
+    ss = sep.join(kk[1:])
+    return ff, ss
+ 

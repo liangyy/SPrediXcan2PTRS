@@ -17,9 +17,9 @@ python $runscript \
   --predictdb $db_file \
   --geno_cov $geno_cov_file \
   --gwas $gwas_file \
-         chromosome:chromosome \
-         position:position \
-         effect_allele:effect_allele \
-         non_effect_allele:non_effect_allele \
+  --gwas_cols chromosome=chromosome \
+    position=position \
+    effect_allele=effect_allele \
+    non_effect_allele=non_effect_allele \
   --gwas_sample_size 197735 \
   --output_prefix $outdir/test_run
