@@ -1,14 +1,14 @@
 gwas_tool_path: '/gpfs/data/im-lab/nas40t2/yanyul/GitHub/summary-gwas-imputation/src'
 metaxcan_path: '/gpfs/data/im-lab/nas40t2/yanyul/GitHub/MetaXcan/software'
 harmonization_type: 'full'  # or 'simple'
-gwas_file: '/gpfs/data/im-lab/nas40t2/yanyul/PTRS/gwas_in_tsv/gwas_in_tsv_subset1_x_{name_tag}.tsv'
+gwas_file: '/home/t.cri.yliang/scratch/playground/50_raw.gwas.imputed_v3.both_sexes.tsv.gz'
 predict_db: '/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/ctimp_{tissue}.db'
 predict_db_cov: '/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/ctimp_{tissue}.txt.gz'
 
 # provide column information of the GWAS
 gwas_columns:
-  effect_allele: 'alt'  # necessary 
-  non_effect_allele: 'ref'  # necessary 
+  # effect_allele: 'alt'  # necessary 
+  # non_effect_allele: 'ref'  # necessary 
   pvalue: 'pval'  # necessary 
   beta_se: 'se'  # necessary 
   effect_size: 'beta'  # necessary 
@@ -21,7 +21,7 @@ full_extra_command:  # these will be appended to the script call
   - '-snp_reference_metadata /gpfs/data/im-lab/nas40t2/yanyul/data/MetaXcan/data/gtex_v8_eur_filtered_maf0.01_monoallelic_variants.txt.gz METADATA'  # add a snp reference metadata so map to the desired variant panel
   - '--chromosome_format'  # manually add this flag to add chr to chr_col
   - '-meta_extra_col rsid:6'
-  - "-split_column variant ':' chromosome position"
+  - "-split_column variant ':' chromosome position non_effect_allele effect_allele"
   - '-output_column_map variant variant'
 
 # for S-PrediXcan
