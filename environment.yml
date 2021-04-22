@@ -6,10 +6,10 @@ channels:
   - defaults
 dependencies:
   - ipython
-  - jax=0.2.10
   - jupyter
   - matplotlib
   - numpy=1.19
+  - numba=0.53
   - pandas=1.2
   - pandas-plink==2.2.4
   - pyliftover=0.4
@@ -19,4 +19,5 @@ dependencies:
   - cyvcf2=0.11
   - fastparquet=0.5
   - python-snappy=0.5
+  - h5py=2.10
 
