@@ -1,0 +1,36 @@
+gwas_tool_path: '/gpfs/data/im-lab/nas40t2/yanyul/GitHub/summary-gwas-imputation/src'
+metaxcan_path: '/gpfs/data/im-lab/nas40t2/yanyul/GitHub/MetaXcan/software'
+harmonization_type: 'full'  # or 'simple'
+gwas_file: '/gpfs/data/im-lab/nas40t2/yanyul/PTRS/gwas_in_tsv/gwas_in_tsv_subset1_x_{name_tag}.tsv'
+predict_db: '/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/ctimp_{tissue}.db'
+predict_db_cov: '/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/ctimp_{tissue}.txt.gz'
+
+# provide column information of the GWAS
+gwas_columns:
+  effect_allele: 'alt'  # necessary 
+  non_effect_allele: 'ref'  # necessary 
+  pvalue: 'pval'  # necessary 
+  beta_se: 'se'  # necessary 
+  effect_size: 'beta'  # necessary 
+  sample_size: 'n_complete_samples'  # optional
+  # variant_id: 'SNP'  # optional
+
+# for full harmonization
+full_extra_command:  # these will be appended to the script call
+  - '-liftover /gpfs/data/im-lab/nas40t2/yanyul/data/MetaXcan/data/liftover/hg19ToHg38.over.chain.gz'  # add liftover 
+  - '-snp_reference_metadata /gpfs/data/im-lab/nas40t2/yanyul/data/MetaXcan/data/gtex_v8_eur_filtered_maf0.01_monoallelic_variants.txt.gz METADATA'  # add a snp reference metadata so map to the desired variant panel
+  - '--chromosome_format'  # manually add this flag to add chr to chr_col
+  - '-meta_extra_col rsid:6'
+  - "-split_column variant ':' chromosome position"
+
+# for S-PrediXcan
+spredixcan_extra_command: 
+  # - '--keep_non_rsid'
+  - '--additional_output'
+  # - '--model_db_snp_key varID'
+spredixcan_snp_col: 'rsid'
+spredixcan_effect_cols: '--beta_column effect_size --se_column beta_se'
+
+tissue: 'Whole_Blood'
+name_tag: 'height'
+outdir: '/scratch/t.cri.yliang/SPrediXcan2PTRS/test_ptrs_ukb_gwas'

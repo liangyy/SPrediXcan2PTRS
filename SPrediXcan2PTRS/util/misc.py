@@ -1,8 +1,23 @@
 import os.path
 import yaml
 import re
+import warnings
 
 import pandas as pd
+
+GWAS_PARSER = {
+    '{chromosome}': '(?P<chromosome>(?:chr|)[0-9]+)',
+    '{position}': '(?P<position>[0-9]+)',
+    '{effect_allele}': '(?P<effect_allele>[A-Z]+)',
+    '{non_effect_allele}': '(?P<non_effect_allele>[A-Z]+)'
+}
+GWAS_DEFAULT_NA = {
+    'chromosome': 'chr0',
+    'position': '1',
+    'effect_allele': 'A',
+    'non_effect_allele': 'T'
+}
+# kk = '{chr}:{pos}'; kk = re.sub('{chr}', '(?P<chr>(?:chr|)[0-9]+)', kk); kk = re.sub('{pos}', '(?P<pos>[0-9]+)', kk)
 
 def read_table(fn, indiv_col=None):
     _, fn_ext = os.path.splitext(fn)
@@ -91,5 +106,20 @@ def try_cast_float(dict_, keys):
                 dict_[k] = o
             else:
                 dict_[k] = o[0]
-       
+def parse_and_update_gwas_col(cols_dict, col, pattern):
+    regex_str = pattern
+    for k, v in GWAS_PARSER.items():
+        if k in pattern and k not in cols_dict:
+            regex_str = re.sub(k, v, regex_str)
+            cols_dict[k] = []
             
+    for i in col:
+        tmp = re.match(regex_str, i)
+        if tmp is None:
+            warnings.warn(f'Fail to parse {i}.')
+            res = GWAS_DEFAULT_NA
+        else:
+            res = tmp.groupdict()
+        for k, v in res.items():
+            cols_dict[k].append(res[k])      
+    

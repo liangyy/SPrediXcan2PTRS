@@ -27,27 +27,27 @@ def save_result(f, grp_name, value_dict):
         elif k in ['alpha', 'offset']:
             grp.attrs[k] = v
 
-def load_gwas_snp(args_gwas, liftover_chain=None):
-    if len(args_gwas) != 5:
-        raise ValueError('Expect 5 values in --gwas but get {}'.format(len(args_gwas)))
-    fn = args_gwas[0]
-    df = mi.read_table(fn)
+def load_gwas_snp(args_gwas, args_gwas_cols, liftover_chain=None):
+    df = mi.read_table(args_gwas)
     
-    rename_pairs = OrderedDict()
+    cols_dict = OrderedDict()
     expected = [ 'chromosome', 'position', 'effect_allele', 'non_effect_allele' ]
-    for v in args_gwas[1:]:
-        v = v.split(':')
-        if v[0] not in expected:
-            raise ValueError(f'We do not expect {v[0]} in --gwas.')
-        if v[0] in rename_pairs:
-            raise ValueError(f'Duplicated {v[0]}.')
-        if v[1] not in df.columns:
-            raise ValueError(f'{v[1]} not in GWAS table.')
-        rename_pairs[v[1]] = v[0]
-    
-    df.rename(columns=rename_pairs, inplace=True)
-    
-    df = df[expected].copy()
+    exp_patterns = [ '{' + v + '}' for v in expected ]
+    for col in args_gwas_cols:
+        tmp = col.split('=')
+        if len(tmp) != 2:
+            raise ValueError(f'Wrong format in --gwas_cols: {col}')
+        col_in_table, target_col_pattern = tmp[0], tmp[1]
+        if col_in_table not in df.columns:
+            raise ValueError(f'Column {col_in_table} is not in GWAS table.')
+        if '{' in target_col_pattern and '}':
+            mi.parse_and_update_gwas_col(cols_dict, df[col_in_table], target_col_pattern)
+        else:
+            if target_col_pattern not in cols_dict:
+                cols_dict[target_col_pattern] = df[col_in_table]
+            else:
+                raise ValueError(f'Duplicated column definition: {target_col_pattern}.')
+    df = pd.DataFrame(cols_dict)
     
     if liftover_chain is not None:
         tmp = lo.liftover(df.chromosome, df.position, liftover_chain)
@@ -113,16 +113,25 @@ if __name__ == '__main__':
         Use {chr_num} in replace of the chromosome numbering. \\
         For instance, en_Whole_Blood.geno_cov.chr{chr_num}.evd.npz
     ''')
-    parser.add_argument('--gwas', nargs='+', help='''
+    parser.add_argument('--gwas', help='''
         The GWAS file being used for (S)PrediXcan analysis. \\
         We need this since we want to use the same SNPs as the ones used in (S)PrediXcan. \\
-        And specify 4 columns: chromosome, position, effect_allele, non_effect_allele \\
+    ''')
+    parser.add_argument('--gwas_cols', nargs='+', help='''
+        Specify the columns in GWAS table. \\
+        Expect 4 columns: chromosome, position, effect_allele, non_effect_allele \\
         For instance: \\
-            --gwas filename \\
-            chromosome:chr \\
-            position:pos \\
-            effect_allele:a1 \\
-            non_effect_allele: a2 
+            --gwas_cols \\
+            chr=chromosome=chr \\
+            pos=position:pos \\
+            a1=effect_allele \\
+            a2=non_effect_allele \\
+        If want to do some parsing on column KK, do KK={chromosome}:{position}. \\
+        Another example: \\
+            --gwas_cols \\
+            KK={chromosome}:{position} \\
+            a1=effect_allele \\
+            a2=non_effect_allele \\
     ''')
     parser.add_argument('--liftover_chain', default=None, help='''
         If specified, we will liftover GWAS. \\
@@ -172,7 +181,7 @@ if __name__ == '__main__':
     df_pxcan = pd.read_csv(args.predixcan)
     
     logging.info('Loading GWAS.')
-    df_gwas = load_gwas_snp(args.gwas)
+    df_gwas = load_gwas_snp(args.gwas, args.gwas_cols)
     
     logging.info('Loading genotype covariances.')
     geno_cov = cc.GenoCov(args.geno_cov)
