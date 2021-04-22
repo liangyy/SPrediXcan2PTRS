@@ -22,4 +22,4 @@ python $runscript \
          effect_allele:effect_allele \
          non_effect_allele:non_effect_allele \
   --gwas_sample_size 197735 \
-  --output $outdir/test_run
+  --output_prefix $outdir/test_run

@@ -4,7 +4,7 @@ import re
 
 import pandas as pd
 
-def read_table(fn, indiv_col):
+def read_table(fn, indiv_col=None):
     _, fn_ext = os.path.splitext(fn)
     compress_args = {}
     if fn_ext == '.gz':
@@ -20,6 +20,8 @@ def read_table(fn, indiv_col):
     for i in range(df.shape[1]):
         if df.columns[i] == indiv_col:
             break
+    if indiv_col is None:
+        return df
     col_list = df.columns.to_list()
     col_list.pop(i)
     col_list = [ indiv_col ] + col_list
@@ -36,7 +38,7 @@ def _try_cast_to_float_list(val_):
     if isinstance(val_, float) or isinstance(val_, int):
         val_ = [ float(val_) ]
     else:
-        raise ValueError(f'{val_} is unexpected'.)
+        raise ValueError(f'{val_} is unexpected.')
     return val_
 def _check_is(val_, target):
     if not isinstance(val_, target):

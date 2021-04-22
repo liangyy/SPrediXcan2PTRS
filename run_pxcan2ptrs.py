@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+import re
+
 import pandas as pd
 import numpy as np
 import h5py
@@ -10,7 +12,7 @@ import SPrediXcan2PTRS.util.liftover as lo
 DEFAULT_PARAMS = OrderedDict([
     ('alpha', [ 1. ]),
     ('offset', [ 0.01 ]),
-    ('nlambda': 100),
+    ('nlambda', 100),
     ('ratio_lambda', 100.),
     ('maxiter', 1000),
     ('tol', 1e-5)
@@ -37,7 +39,7 @@ def load_gwas_snp(args_gwas, liftover_chain=None):
         v = v.split(':')
         if v[0] not in expected:
             raise ValueError(f'We do not expect {v[0]} in --gwas.')
-        if v[0] in key_val_pairs:
+        if v[0] in rename_pairs:
             raise ValueError(f'Duplicated {v[0]}.')
         if v[1] not in df.columns:
             raise ValueError(f'{v[1]} not in GWAS table.')
@@ -78,7 +80,7 @@ def load_params(fn_yaml=None):
             my_load[k] = mi.check_param(k, v)
     
     other_params = OrderedDict()
-    for k, v in DEFAULT_PARAMS:
+    for k, v in DEFAULT_PARAMS.items():
         if k in ['alpha', 'offset']:
             continue
         else:
@@ -142,13 +144,13 @@ if __name__ == '__main__':
         tol: 1e-5 # any value > 0
         Note that alpha and offset can take multiple values (a list).
     ''')
-    parser.add_argument('--output', help='''
+    parser.add_argument('--output_prefix', help='''
         Output file name in HDF5 format.
     ''')
-    parser.add_argument('--mode', default='blk', choices=['by_chr', 'jointly'], help='''
+    parser.add_argument('--mode', default='by_chr', choices=['by_chr', 'jointly'], help='''
         DO NOT need to change usually. \\
         Fitting PTRS one chromosome at a time or all jointly. \\
-        Typically they give very similar result.
+        Typically they give very similar result (default = by_chr).
     ''')
     args = parser.parse_args()
     
@@ -182,7 +184,7 @@ if __name__ == '__main__':
     logging.info('Initializing the solver.')
     solver = so.Solver(
         df_pxcan=df_pxcan[['gene', 'zscore']].copy(),
-        sample_size=args.gwas_sample_size
+        sample_size=args.gwas_sample_size,
         weight_db=weight,
         geno_cov=geno_cov, 
         df_gwas_snp=df_gwas[['chrom', 'position', 'effect_allele', 'non_effect_allele']].copy(),
@@ -194,7 +196,7 @@ if __name__ == '__main__':
     genes = solver.gene_meta.copy()
     
     logging.info(
-        'Calculating PTRS weights: nalpha = {}, noffset = {}'.format(
+        'Calculating PTRS weights: nalpha = {}, noffset = {}.'.format(
             len(alphas), len(offsets)
         )
     )
@@ -217,12 +219,12 @@ if __name__ == '__main__':
                 )
             to_keep_idxs = list(np.where(conv[1:] == 1)[0] + 1)
             to_keep_idxs = np.array([ 0 ] + to_keep_idxs)
-            betahat = betahat[:, to_keep_idxs] ]
+            betahat = betahat[:, to_keep_idxs ]
             lambda_seq = lambda_seq[ to_keep_idxs ]
             logging.info('-> {} lambda values converged. Saving results.'.format(lambda_seq.shape[0]))
             save_result(
                 output_handle, f'dataset_{result_id}',
-                values=OrderedDict([
+                value_dict=OrderedDict([
                     ('alpha', alpha),
                     ('offset', offset),
                     ('betahat', betahat),
@@ -232,7 +234,7 @@ if __name__ == '__main__':
             result_id += 1
     
     logging.info('Saving other meta information.')
-    output_handle.create_dataset('genes', data=solver.genes)
+    output_handle.create_dataset('genes', data=np.concatenate(solver.genes).astype('S'))
     solver.gene_meta.to_csv(
         args.output_prefix + 'gene_meta.tsv.gz', 
         index=False, compression='gzip', sep='\t'
