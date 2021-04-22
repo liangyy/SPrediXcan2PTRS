@@ -27,6 +27,9 @@ fi
 
 # run SPrediXcan2PTRS
 
+conda deactivate
+conda activate SPrediXcan2PTRS
+
 export PYTHONPATH=$PYTHONPATH:/home/t.cri.yliang/labshare/GitHub/SPrediXcan2PTRS
 export PYTHONPATH=$PYTHONPATH:/home/t.cri.yliang/labshare/GitHub/transethnic_prs
 

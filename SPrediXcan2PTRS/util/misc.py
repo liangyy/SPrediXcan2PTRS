@@ -106,13 +106,18 @@ def try_cast_float(dict_, keys):
                 dict_[k] = o
             else:
                 dict_[k] = o[0]
+def _remove_braket(ss):
+    ss = re.sub('{', '', ss)
+    ss = re.sub('}', '', ss)
+    return ss
 def parse_and_update_gwas_col(cols_dict, col, pattern):
     regex_str = pattern
     for k, v in GWAS_PARSER.items():
-        if k in pattern and k not in cols_dict:
+        k_ = _remove_braket(k)
+        if k in pattern and k_ not in cols_dict:
             regex_str = re.sub(k, v, regex_str)
-            cols_dict[k] = []
-            
+            cols_dict[k_] = []
+    
     for i in col:
         tmp = re.match(regex_str, i)
         if tmp is None:

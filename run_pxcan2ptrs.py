@@ -47,14 +47,24 @@ def load_gwas_snp(args_gwas, args_gwas_cols, liftover_chain=None):
             else:
                 raise ValueError(f'Duplicated column definition: {target_col_pattern}.')
     df = pd.DataFrame(cols_dict)
-    
+    breakpoint()
+ 
     if liftover_chain is not None:
-        tmp = lo.liftover(df.chromosome, df.position, liftover_chain)
+        tmp = lo.liftover(df.chromosome, df.position.astype(int), liftover_chain)
         df.chromosome = tmp.liftover_chr
         df.position = tmp.liftover_pos
     
-    df.chromosome = [ int(re.sub('chr', '', i)) for i in df.chromosome ]
-    df.position = df.position.astype(int)
+    chrs = []
+    pos = []
+    for cc, pp in zip(df.chromosome, df.position):
+        try:
+           cc_ = int(re.sub('chr', '', cc))
+        except ValueError:
+           cc_ = 'NA'
+        chrs.append(cc_)
+        pos.append(int(pp))
+    df.chromosome = chrs
+    df.position = pos
     
     df.rename(columns={
         'chromosome': 'chrom',
@@ -180,7 +190,7 @@ if __name__ == '__main__':
     df_pxcan = pd.read_csv(args.predixcan)
     
     logging.info('Loading GWAS.')
-    df_gwas = load_gwas_snp(args.gwas, args.gwas_cols)
+    df_gwas = load_gwas_snp(args.gwas, args.gwas_cols, args.liftover_chain)
     
     logging.info('Loading genotype covariances.')
     geno_cov = cc.GenoCov(args.geno_cov)
