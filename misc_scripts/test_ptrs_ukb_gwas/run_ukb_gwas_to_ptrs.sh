@@ -41,6 +41,7 @@ db_file=/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/ct
 outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/test_ptrs_ukb_gwas
 outprefix=SPrediXcan2PTRS.height_x_Whole_Blood.harmonization_full 
 outprefix2=SPrediXcan2PTRS.height_x_Whole_Blood.harmonization_full.2 
+outprefix3=SPrediXcan2PTRS.height_x_Whole_Blood.harmonization_full.3
 
 chainfile=/gpfs/data/im-lab/nas40t2/yanyul/data/MetaXcan/data/liftover/hg19ToHg38.over.chain.gz
 
@@ -73,3 +74,21 @@ then
     --gwas_sample_size 360388 \
     --output_prefix $outdir/$outprefix2
 fi
+
+# test 3
+if [[ $1 == 3 ]]
+then
+  echo python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $db_file \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas_file \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size 360388 \
+    --hyperparam_yaml params.yaml \
+    --output_prefix $outdir/$outprefix3
+fi
+

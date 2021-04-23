@@ -47,7 +47,6 @@ def load_gwas_snp(args_gwas, args_gwas_cols, liftover_chain=None):
             else:
                 raise ValueError(f'Duplicated column definition: {target_col_pattern}.')
     df = pd.DataFrame(cols_dict)
-    breakpoint()
  
     if liftover_chain is not None:
         tmp = lo.liftover(df.chromosome, df.position.astype(int), liftover_chain)
@@ -105,60 +104,60 @@ def load_params(fn_yaml=None):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(prog='run_pxcan2ptrs.py', description='''
-        Convert S-PrediXcan results to PTRS weights along a lambda sequence. \\
+        Convert S-PrediXcan results to PTRS weights along a lambda sequence.  
         Need to have transethnic_prs and SPrediXcan2PTRS in PYTHONPATH.
-    ''')
+    ''', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--predixcan', help='''
-        Path to (S)PrediXcan results \\
+        Path to (S)PrediXcan results 
         (CSV format from SPrediXcan.py).
     ''')
     parser.add_argument('--predictdb', help='''
         Path to the predictDB file.
     ''')
     parser.add_argument('--geno_cov', help='''
-        Pattern path to the genotype covariance. \\
-        This should match the predictDB file, \\
-        otherwise many genes and SNPs will be missed. \\
-        Use {chr_num} in replace of the chromosome numbering. \\
+        Pattern path to the genotype covariance. 
+        This should match the predictDB file, 
+        otherwise many genes and SNPs will be missed. 
+        Use {chr_num} in replace of the chromosome numbering. 
         For instance, en_Whole_Blood.geno_cov.chr{chr_num}.evd.npz
     ''')
     parser.add_argument('--gwas', help='''
-        The GWAS file being used for (S)PrediXcan analysis. \\
+        The GWAS file being used for (S)PrediXcan analysis. 
         We need this since we want to use the same SNPs as the ones used in (S)PrediXcan. 
     ''')
     parser.add_argument('--gwas_cols', nargs='+', help=f'''
-        Specify the columns in GWAS table. \\
-        Expect 4 columns: chromosome, position, effect_allele, non_effect_allele \\
-        For instance: \\
-            --gwas_cols \\
-            chr{GWAS_COL_SEP}chromosomechr \\
-            pos{GWAS_COL_SEP}position:pos \\
-            a1{GWAS_COL_SEP}effect_allele \\
-            a2{GWAS_COL_SEP}non_effect_allele \\
-        If want to do some parsing on column KK, do KK={{chromosome}}:{{position}}. \\
-        Another example: \\
-            --gwas_cols \\
-            KK{GWAS_COL_SEP}{{chromosome}}:{{position}} \\
-            a1{GWAS_COL_SEP}effect_allele \\
+        Specify the columns in GWAS table. 
+        Expect 4 columns: chromosome, position, effect_allele, non_effect_allele 
+        For instance: 
+            --gwas_cols 
+            chr{GWAS_COL_SEP}chromosomechr 
+            pos{GWAS_COL_SEP}position:pos 
+            a1{GWAS_COL_SEP}effect_allele 
+            a2{GWAS_COL_SEP}non_effect_allele 
+        If want to do some parsing on column KK, do KK={{chromosome}}:{{position}}. 
+        Another example: 
+            --gwas_cols 
+            KK{GWAS_COL_SEP}{{chromosome}}:{{position}} 
+            a1{GWAS_COL_SEP}effect_allele 
             a2{GWAS_COL_SEP}non_effect_allele 
     ''')
     parser.add_argument('--liftover_chain', default=None, help='''
-        If specified, we will liftover GWAS. \\
-        Note that we expect GWAS and predictDB use the same genome assembly version \\
+        If specified, we will liftover GWAS. 
+        Note that we expect GWAS and predictDB use the same genome assembly version 
         since we match SNPs by position.
     ''')
     parser.add_argument('--gwas_sample_size', type=int, help='''
-        GWAS sample size. \\
+        GWAS sample size. 
         We use it as the sample size for running PTRS fitting.
     ''')
     parser.add_argument('--hyperparam_yaml', default=None, help='''
-        A YAML file containing the hyper-parameters. \\
-        For instance (values listed are default): \\
-        alpha: [ 1. ] # any value in (0, 1] \\
-        nlambda: 100 # any integer > 0 \\
-        offset: [ 0.01 ] # any value in [0, 1) \\
-        ratio_lambda: 100. # any value > 1 \\
-        maxiter: 1000 # any integer > 0 \\
+        A YAML file containing the hyper-parameters. 
+        For instance (values listed are default): 
+        alpha: [ 1. ] # any value in (0, 1] 
+        nlambda: 100 # any integer > 0 
+        offset: [ 0.01 ] # any value in [0, 1) 
+        ratio_lambda: 100. # any value > 1 
+        maxiter: 1000 # any integer > 0 
         tol: 1e-5 # any value > 0
         Note that alpha and offset can take multiple values (a list).
     ''')
@@ -166,8 +165,8 @@ if __name__ == '__main__':
         Output file name in HDF5 format.
     ''')
     parser.add_argument('--mode', default='by_chr', choices=['by_chr', 'jointly'], help='''
-        DO NOT need to change usually. \\
-        Fitting PTRS one chromosome at a time or all jointly. \\
+        DO NOT need to change usually. 
+        Fitting PTRS one chromosome at a time or all jointly. 
         Typically they give very similar result (default = by_chr).
     ''')
     args = parser.parse_args()

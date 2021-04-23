@@ -92,6 +92,7 @@ def check_param(key_, val_):
     if key_ == 'tol':
         _check_is(val_, float)
         _check_range(val_, 0, None, False, None)
+    return val_
 def try_cast_float(dict_, keys):
     for k in keys:
         if k in dict_:
