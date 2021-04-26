@@ -50,23 +50,21 @@ fi
 # run s-predixcan
 spxcanscript=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/MetaXcan/software/SPrediXcan.py
 pxcan_file=$outdir/spredixcan.${GWASTAG}.${TISSUE}.csv
-if [[ ! -f pxcan_file ]]
+if [[ ! -f $pxcan_file ]]
 then
   echo "Running S-PrediXcan"
   echo "Input: $imputeb_gwas"
   echo "Output: $pxcan_file"
   python $spxcanscript \
     --gwas_file $imputeb_gwas \
-    --snp_column panel_variant_id \
+    --snp_column variant_id \
     --effect_allele_column effect_allele \
     --non_effect_allele_column non_effect_allele \
     --beta_column effect_size \
     --se_column standard_error \
     --model_db_path $predict_db \
     --covariance $predict_db_cov \
-    --keep_non_rsid \
     --additional_output \
-    --model_db_snp_key varID \
     --throw \
     --output_file $pxcan_file
 fi
@@ -84,7 +82,7 @@ geno_cov_file=/home/t.cri.yliang/scratch/SPrediXcan2PTRS/geno_cov/gtex_v8/ctimp_
 ptrs_prefix=$outdir/spxcan2ptrs.${GWASTAG}.${TISSUE}
 ptrs_file=$ptrs_prefix.results.h5
 
-if [[ -f $ptrs_file ]]
+if [[ ! -f $ptrs_file ]]
 then
   echo "Running SPrediXcan2PTRS"
   echo "Input: $pxcan_file"
