@@ -46,7 +46,7 @@ if __name__ == '__main__':
     logging.info('Saving.')
     df['effect_size'] = bhat
     df['standard_error'] = bhat_se
-    df.to_csv(args.output, compression='gzip', sep='\t')
+    df.to_csv(args.output, compression='gzip', sep='\t', index=False)
     
     logging.info('Done.')
     

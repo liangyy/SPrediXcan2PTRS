@@ -15,6 +15,7 @@ then
   TISSUE=$1
   GWASTAG=$2
   GWASN=$3
+  PBS_O_WORKDIR=`pwd`
 fi
 
 source ~/.bash_profile
