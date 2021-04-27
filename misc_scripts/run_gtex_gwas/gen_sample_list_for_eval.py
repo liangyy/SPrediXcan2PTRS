@@ -7,6 +7,7 @@ df2 = pd.read_parquet('/home/t.cri.yliang/labshare/ukb_idp/data/imagexcan_phenot
 df = pd.merge(df, df2, on='eid')
 df = df[ df.isna().sum(axis=1) == 0 ].reset_index(drop=True)
 df_pos = df[ (df.parent_AD > 0) | (df.parent_depression > 0) ]
+df_neg = df[ ~ df.eid.isin(df_pos.eid) ]
 df_neg = df_neg.iloc[ np.random.choice(df_neg.shape[0], 30000, replace=False), : ]
 df_ = pd.concat([df_pos, df_neg], axis=0).reset_index(drop=True)
 eids = df_.eid.astype(str)

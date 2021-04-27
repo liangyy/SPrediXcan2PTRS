@@ -41,8 +41,9 @@ class PredExpr:
         starts, ends = self._get_range(sample_idx.shape[0], chunksize=chunksize)
         o = []
         f = h5py.File(self.fn, 'r')
-        for s, e in tqdm(zip(starts, ends)):
-            mat = f['pred_expr'][:, sample_idxs[s:e]]
+        for s, e in tqdm(zip(starts, ends), total=len(starts)):
+            breakpoint()
+            mat = f['pred_expr'][:, sample_idx[s:e]]
             mat = mat.T @ weight_mat
             o.append(mat)
         f.close()
@@ -79,7 +80,7 @@ def ptrs2weight(fn):
 # def cor_mat_vec(mat, vec):
 #     return np.corrcoef(mat.T, vec[:, np.newaxis].T)[-1, :-1]
 
-PXCAN_PVAL_CUTOFFS = = np.concatenate([
+PXCAN_PVAL_CUTOFFS = np.concatenate([
     10 ** np.arange(-30, -10, 2).astype(float),
     10 ** np.arange(-10, -2, 0.2).astype(float),
     10 ** np.arange(-2, 0, 0.02).astype(float),
@@ -103,15 +104,15 @@ if __name__ == '__main__':
     parser.add_argument('--chunksize', type=int, default=1000, help='''
         Number of samples per chunk.
     ''')
-    parser.add_argument('--list_of_ptrs', args='+', help='''
+    parser.add_argument('--list_of_ptrs', nargs='+', help='''
         [Tag-name]:[file-name]
     ''')
-    parser.add_argument('--list_of_pxcan', args='+', help='''
+    parser.add_argument('--list_of_pxcan', nargs='+', help='''
         [Tag-name]:[file-name]
     ''')
-    parser.add_argument('--seed', type=int, default=1, help='''
-        Numpy random seed.
-    ''')
+    # parser.add_argument('--seed', type=int, default=1, help='''
+    #     Numpy random seed.
+    # ''')
     parser.add_argument('--output_parquet', help='''
         Output parquet table for PTRS.
     ''')
@@ -126,8 +127,8 @@ if __name__ == '__main__':
         datefmt = '%Y-%m-%d %I:%M:%S %p'
     )
     
-    logging.info('Numpy random seed = {args.seed}.')
-    np.random.seed(args.seed)
+    # logging.info(f'Numpy random seed = {args.seed}.')
+    # np.random.seed(args.seed)
     
     logging.info('Loading samples.')
     ss = []
@@ -136,13 +137,14 @@ if __name__ == '__main__':
             i = i.strip()
             ss.append(i)
     samples = np.array(ss)
-    if samples.shape[0] < args.n_samples:
-        idx = np.random.choice(samples.shape[0], args.n_samples, replace=False)
-        samples = samples[idx].copy()
-    logging.info('{samples.shape[0]} samples being used.')
+    if samples.shape[0] > args.n_samples:
+        # idx = np.random.choice(samples.shape[0], args.n_samples, replace=False)
+        # samples = samples[idx].copy()
+        samples = samples[:args.n_samples].copy()
+    logging.info(f'{samples.shape[0]} samples being used.')
     
     logging.info('Initializing predicted expression.')
-    pred_expr = PredExpr(pred_expr_h5)
+    pred_expr = PredExpr(args.pred_expr)
     
     df_weight = None
     logging.info('Loading PrediXcan naive scores.')
@@ -150,9 +152,9 @@ if __name__ == '__main__':
     for kk in args.list_of_pxcan:
         tag, fn = kk.split(':')
         logging.info(f'-> Loading {tag}.')
-        tmp = pd.read_csv(spxcan)
+        tmp = pd.read_csv(fn)
         tmp, pval_dict[tag] = pxcan2weight(tmp, PXCAN_PVAL_CUTOFFS)
-        tmp.columns[1:] = [ f'SP_x_{tag}_x_{i}' for i in tmp.columns[1:] ]
+        tmp.columns = tmp.columns[:1].tolist() + [ f'SP_x_{tag}_x_{i}' for i in tmp.columns[1:] ]
         if df_weight is None:
             df_weight = tmp
         else:
@@ -165,14 +167,14 @@ if __name__ == '__main__':
         tag, fn = kk.split(':')
         logging.info(f'-> Loading {tag}.')
         tmp, lam_dict[tag] = ptrs2weight(fn)
-        tmp.columns[1:] = [ f'PT_x_{tag}_x_{i}' for i in tmp.columns[1:] ]
+        tmp.columns = tmp.columns[:1].tolist() + [ f'PT_x_{tag}_x_{i}' for i in tmp.columns[1:] ]
         if df_weight is None:
             df_weight = tmp
         else:
             df_weight = pd.merge(df_weight, tmp, how='outer', on='gene')
         df_weight.fillna(0, inplace=True)
     
-    logging.info('There are {df_weight.shape[1]} scores to work with.')
+    logging.info(f'There are {df_weight.shape[1]} scores to work with.')
     
     logging.info('Calculating PTRSs.')
     out = pred_expr.mul_weights(df_weight, samples, chunksize=args.chunksize)
