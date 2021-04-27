@@ -6,6 +6,7 @@
 *.tsv
 *.csv
 *.gz
+misc_scripts/run_gtex_gwas/sample_list_for_eval.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
