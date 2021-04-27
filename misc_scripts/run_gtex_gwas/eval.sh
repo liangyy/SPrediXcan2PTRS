@@ -20,10 +20,12 @@ then
   PBS_O_WORKDIR=`pwd`
 fi
 
-# if [[ -z $SEED ]]
-# then
-#   SEED=2021
-# fi
+if [[ $NSAMPLE == "all" ]]
+then
+  nsample_cmd=""
+else
+  nsample_cmd="--n_samples $NSAMPLE"
+fi
 
 source ~/.bash_profile
 source ~/.bashrc
@@ -55,7 +57,7 @@ then
   python $PBS_O_WORKDIR/eval_on_ukb.py \
     --pred_expr $pred_expr \
     --sample_list $sample_list \
-    --n_samples $NSAMPLE \
+    $nsample_cmd \
     --list_of_ptrs ${GWASTAG}:$ptrs_file \
     --list_of_pxcan ${GWASTAG}:$pxcan_file \
     --output_parquet $eval_file
