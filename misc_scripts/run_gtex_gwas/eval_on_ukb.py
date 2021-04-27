@@ -23,12 +23,14 @@ class PredExpr:
         if tmp[-1] != n:
             tmp = list(tmp) + [ n ]
         return tmp[:-1].copy(), tmp[1:].copy()
-    def mul_weights(self, df_weight, samples, chunksize=1000):
+    def mul_weights(self, df_weight, samples, max_n=None, chunksize=1000):
         df_sample_sub = pd.merge(
             self.samples, 
             pd.DataFrame({'eid': samples}), 
             on='eid'
         )
+        if max_n is not None and max_n < df_sample_sub.shape[0]:
+            df_sample_sub = df_sample_sub.iloc[:max_n, :].reset_index(drop=True)
         df_weight_sub = pd.merge(
             self.genes[['gene']], 
             df_weight, 
@@ -129,7 +131,6 @@ if __name__ == '__main__':
     
     # logging.info(f'Numpy random seed = {args.seed}.')
     # np.random.seed(args.seed)
-    
     logging.info('Loading samples.')
     ss = []
     with open(args.sample_list, 'r') as f:
@@ -137,11 +138,6 @@ if __name__ == '__main__':
             i = i.strip()
             ss.append(i)
     samples = np.array(ss)
-    if samples.shape[0] > args.n_samples:
-        # idx = np.random.choice(samples.shape[0], args.n_samples, replace=False)
-        # samples = samples[idx].copy()
-        samples = samples[:args.n_samples].copy()
-    logging.info(f'{samples.shape[0]} samples being used.')
     
     logging.info('Initializing predicted expression.')
     pred_expr = PredExpr(args.pred_expr)
@@ -177,7 +173,7 @@ if __name__ == '__main__':
     logging.info(f'There are {df_weight.shape[1]} scores to work with.')
     
     logging.info('Calculating PTRSs.')
-    out = pred_expr.mul_weights(df_weight, samples, chunksize=args.chunksize)
+    out = pred_expr.mul_weights(df_weight, samples, chunksize=args.chunksize, max_n=args.n_samples)
     
     logging.info('Reformatting results.')
     osamples = out.eid.values
