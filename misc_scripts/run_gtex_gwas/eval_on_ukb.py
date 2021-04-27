@@ -44,7 +44,6 @@ class PredExpr:
         o = []
         f = h5py.File(self.fn, 'r')
         for s, e in tqdm(zip(starts, ends), total=len(starts)):
-            breakpoint()
             mat = f['pred_expr'][:, sample_idx[s:e]]
             mat = mat.T @ weight_mat
             o.append(mat)
@@ -129,6 +128,8 @@ if __name__ == '__main__':
         datefmt = '%Y-%m-%d %I:%M:%S %p'
     )
     
+    import re
+
     # logging.info(f'Numpy random seed = {args.seed}.')
     # np.random.seed(args.seed)
     logging.info('Loading samples.')
@@ -185,8 +186,10 @@ if __name__ == '__main__':
         model, tag, val = cc.split('_x_')
         if model == 'SP':
             model = 'naive'
+            val = re.sub('pxcan_', '', val)
         elif model == 'PT':
             model = 'en'
+            val = re.sub('lambda_', '', val)
         models.append(model)
         tags.append(tag)
         values.append(float(val))
