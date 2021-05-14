@@ -167,7 +167,7 @@ class Solver:
             }, 
             inplace=True
         )
-        
+       
         cov_pe = self.geno_cov.matmul_xt_cov_x(df_weight, weight_value_cols)
         var_pe = cov_pe.diagonal()
         sqrt_var_pe = np.sqrt(var_pe)

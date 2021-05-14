@@ -2,14 +2,13 @@
 #PBS -l walltime=24:00:00
 #PBS -l nodes=1:ppn=1
 #PBS -l mem=32gb
-#PBS -e logs/eval_${TISSUE}_$GWASTAG_$NSAMPLE.err
-#PBS -o logs/eval_${TISSUE}_$GWASTAG_$NSAMPLE.out
+#PBS -e logs/eval_${TISSUE}_${GWASTAG}_$NSAMPLE.err
+#PBS -o logs/eval_${TISSUE}_${GWASTAG}_$NSAMPLE.out
 
 # ARGS:
 # TISSUE
 # GWASTAG
 # NSAMPLE
-# SEED (optional)
 
 if [[ -z $TISSUE ]]
 then
@@ -32,7 +31,7 @@ source ~/.bashrc
 
 conda activate SPrediXcan2PTRS
 
-outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/run_gtex_gwas
+outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/run_gtex_gwas_eur
 pxcan_file=$outdir/spredixcan.${GWASTAG}.${TISSUE}.csv
 ptrs_prefix=$outdir/spxcan2ptrs.${GWASTAG}.${TISSUE}
 ptrs_file=$ptrs_prefix.results.h5
@@ -47,7 +46,8 @@ then
   python $PBS_O_WORKDIR/gen_sample_list_for_eval.py
 fi
 
-eval_file=$outdir/eval.${GWASTAG}.${TISSUE}.parquet
+eval_prefix=$outdir/eval.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
 
 if [[ ! -f $eval_file ]]
 then
@@ -60,7 +60,7 @@ then
     $nsample_cmd \
     --list_of_ptrs ${GWASTAG}:$ptrs_file \
     --list_of_pxcan ${GWASTAG}:$pxcan_file \
-    --output_parquet $eval_file
+    --output_prefix $eval_prefix
 fi
 
 # --seed $SEED \

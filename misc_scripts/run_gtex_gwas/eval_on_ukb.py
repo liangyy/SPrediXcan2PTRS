@@ -114,8 +114,8 @@ if __name__ == '__main__':
     # parser.add_argument('--seed', type=int, default=1, help='''
     #     Numpy random seed.
     # ''')
-    parser.add_argument('--output_parquet', help='''
-        Output parquet table for PTRS.
+    parser.add_argument('--output_prefix', help='''
+        Output prefix of the tables for PTRS.
     ''')
     args = parser.parse_args()
     
@@ -194,9 +194,12 @@ if __name__ == '__main__':
         tags.append(tag)
         values.append(float(val))
     df_out = pd.DataFrame({'model': models, 'tag': tags, 'param': values})
-    df_w = pd.DataFrame(omat.T, columns=osamples)
-    df_out = pd.concat([df_out, df_w], axis=1)
-    df_out.to_parquet(args.output_parquet, index=False)
+    df_w = pd.DataFrame(omat)
+    df_w.columns = df_w.columns.astype(str)
+    df_w = pd.concat([pd.DataFrame({'eid': osamples}), df_w], axis=1)
+    # df_out = pd.concat([df_out, df_w], axis=1)
+    df_w.to_parquet(args.output_prefix + '.scores.parquet', index=False)
+    df_out.to_parquet(args.output_prefix + '.meta.parquet', index=False)
         
     logging.info('Done.')
     

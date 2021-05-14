@@ -83,7 +83,7 @@ class GTExV8GenoLoader:
             samples = self.vcf.samples
             index_in = self._get_idx_of_a_in_b(a=samples, b=samples_only)
             if index_in.shape[0] > 0:
-                geno_mat = geno_mat[:, index_in]
+                geno_mat = geno_mat[index_in, :]
             else:
                 raise ValueError('Something wrong in samples_only since no samples left.')
         snps = pd.concat(snps, axis=0)

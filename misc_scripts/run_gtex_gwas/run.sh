@@ -24,7 +24,7 @@ source ~/.bashrc
 predict_db=/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/ctimp_${TISSUE}.db
 predict_db_cov=/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/ctimp_${TISSUE}.txt.gz
 gwas=/gpfs/data/im-lab/nas40t2/Data/SummaryResults/imputed_gwas_hg38_1.1/imputed_${GWASTAG}.txt.gz
-outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/run_gtex_gwas
+outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/run_gtex_gwas_eur
 
 
 export PYTHONPATH=$PYTHONPATH:/home/t.cri.yliang/labshare/GitHub/SPrediXcan2PTRS
@@ -77,7 +77,7 @@ conda activate SPrediXcan2PTRS
 
 runscript=/home/t.cri.yliang/labshare/GitHub/SPrediXcan2PTRS/run_pxcan2ptrs.py
 
-geno_cov_file=/home/t.cri.yliang/scratch/SPrediXcan2PTRS/geno_cov/gtex_v8/ctimp_$TISSUE.geno_cov.chr{chr_num}.evd.npz
+geno_cov_file=/home/t.cri.yliang/scratch/SPrediXcan2PTRS/geno_cov/gtex_v8_eur/ctimp_$TISSUE.geno_cov.chr{chr_num}.evd.npz
 
 ptrs_prefix=$outdir/spxcan2ptrs.${GWASTAG}.${TISSUE}
 ptrs_file=$ptrs_prefix.results.h5

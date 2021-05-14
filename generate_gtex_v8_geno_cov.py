@@ -99,7 +99,7 @@ if __name__ == '__main__':
         logging.info(f'Extracting SNPs on chromosome {chr_num}.')
         weight_sub = weight_v8.get_by_chr(f'chr{chr_num}')
         tmp = geno_v8.load(weight_sub.rename(columns={'ref_allele': 'ref', 'eff_allele': 'alt'}), samples_only=samples)
-        nn = tmp[0].shape[1]
+        nn = tmp[0].shape[0]
         logging.info(f'Extracting SNPs on chromosome {chr_num}: sample size = {nn}')
         cov_constructor = cc.CovConstructor(tmp[0])
         logging.info(f'Saving geno cov for chromosome {chr_num}.')

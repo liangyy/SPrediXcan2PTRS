@@ -24,7 +24,7 @@ predictdb=/gpfs/data/im-lab/nas40t2/Data/PredictDB/GTEx_v8/models_v1/eqtl/ctimp/
 eursample=/gpfs/data/im-lab/nas40t2/Data/GTEx/V8/eur_samples.txt
 
 # output
-outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/geno_cov/gtex_v8
+outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/geno_cov/gtex_v8_eur
 # outdir=/gpfs/data/im-lab/nas40t2/yanyul/SPrediXcan2PTRS/geno_cov/gtex_v8
 prefix=ctimp_$TISSUE.geno_cov
 
