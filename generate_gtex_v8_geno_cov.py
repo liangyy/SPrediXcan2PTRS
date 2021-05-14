@@ -1,5 +1,13 @@
 import os
 
+def load_list(fn):
+    o = []
+    with open(fn, 'r') as f:
+        for i in f:
+            i = i.strip()
+            o.append(i)
+    return o
+
 def load_mode(mode_list):
     if mode_list[0] not in ['naive', 'cap', 'banded', 'evd']:
         raise ValueError('Wrong mode.')
@@ -77,6 +85,7 @@ if __name__ == '__main__':
     if args.sample_list is not None:
         logging.info('Loading sample list for genotype.')
         samples = load_list(args.sample_list)
+        logging.info('{} samples being loaded.'.format(len(samples)))
     else:
         samples = None
     
