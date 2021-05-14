@@ -41,6 +41,9 @@ if __name__ == '__main__':
     parser.add_argument('--predictdb', help='''
         PredictDB file. 
     ''')
+    parser.add_argument('--sample_list', default=None, help='''
+        The list of samples to use in genotype.
+    ''')
     parser.add_argument('--mode', nargs='+', help='''
         Indicate the mode and parameter of the mode for genotype covariance:
         1. banded [band-size]; 
@@ -71,6 +74,12 @@ if __name__ == '__main__':
     weight_v8 = v8.GTExV8DBLoader(args.predictdb)
     geno_v8 = v8.GTExV8GenoLoader(args.genotype_vcf)
     
+    if args.sample_list is not None:
+        logging.info('Loading sample list for genotype.')
+        samples = load_list(args.sample_list)
+    else:
+        samples = None
+    
     for chr_num in range(1, 23):
         output_prefix = '{}.chr{}'.format(args.output_prefix, chr_num)
         target_file = f'{output_prefix}.{out_ext}'
@@ -80,7 +89,9 @@ if __name__ == '__main__':
             continue
         logging.info(f'Extracting SNPs on chromosome {chr_num}.')
         weight_sub = weight_v8.get_by_chr(f'chr{chr_num}')
-        tmp = geno_v8.load(weight_sub.rename(columns={'ref_allele': 'ref', 'eff_allele': 'alt'}))
+        tmp = geno_v8.load(weight_sub.rename(columns={'ref_allele': 'ref', 'eff_allele': 'alt'}), samples_only=samples)
+        nn = tmp[0].shape[1]
+        logging.info(f'Extracting SNPs on chromosome {chr_num}: sample size = {nn}')
         cov_constructor = cc.CovConstructor(tmp[0])
         logging.info(f'Saving geno cov for chromosome {chr_num}.')
         cov_constructor.compute_to_disk(

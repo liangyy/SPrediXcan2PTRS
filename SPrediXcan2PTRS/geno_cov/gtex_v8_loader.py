@@ -57,7 +57,7 @@ class TargetSNP:
 class GTExV8GenoLoader:
     def __init__(self, geno):
         self.vcf = cy.VCF(geno)
-    def load(self, df_snp):
+    def load(self, df_snp, samples_only=None):
         '''
         df_snp = pd.DataFrame({
             'chr': chromosome,
@@ -79,8 +79,18 @@ class GTExV8GenoLoader:
             geno_mat.append(geno_mat_sub)
             snps.append(snps_sub)
         geno_mat = np.concatenate(geno_mat, axis=1)
+        if samples_only is not None:
+            samples = self.vcf.samples
+            index_in = self._get_idx_of_a_in_b(a=samples, b=samples_only)
+            if index_in.shape[0] > 0:
+                geno_mat = geno_mat[:, index_in]
+            else:
+                raise ValueError('Something wrong in samples_only since no samples left.')
         snps = pd.concat(snps, axis=0)
         return geno_mat, snps
+    def _get_idx_of_a_in_b(self, a, b):
+        tmp = pd.DataFrame({'idx': [ i for i in range(len(a))], 'a': a})
+        return tmp[ tmp.a.isin(b) ].idx.values
     def _load_region(self, region, target_snps):
         snp_target = TargetSNP(target_snps)
         snps = []
