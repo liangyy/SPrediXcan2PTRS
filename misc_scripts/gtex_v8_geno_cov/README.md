@@ -1,4 +1,4 @@
-# Generate genotype covariance for Gtex V8 EN models
+# Generate genotype covariance for GTEx V8 EN models
 
 ```
 # on CRI
