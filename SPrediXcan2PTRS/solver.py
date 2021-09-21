@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+import scipy.stats
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -194,4 +195,43 @@ class Solver:
         )
         # need to rescale lambda_
         return beta, lambda_ * (1 - offset), niter, tol, conv
+    
+    def clump(z, corr, pval_cutoffs, r2_cutoff):
+        abs_z = np.absolute(z)
+        sort_z_order = np.argsort(-abs_z)
+        selected_dict = { idx: 0 for idx in sort_z_order }
+        # 0: not yet settled down
+        # 1: included
+        # -1: discarded
+        for curr_idx in sort_z_order:
+            if selected_dict[curr_idx] == -1:
+                continue
+            elif selected_dict[curr_idx] == 0:
+                selected_dict[curr_idx] = 1
+                for possible_idx in range(xdim):
+                    if selected_dict[possible_idx] == 0:
+                        if (corr[curr_idx, possible_idx] ** 2) >= r2_cutoff:
+                            selected_dict[possible_idx] = -1
+            else:
+                raise ValueError('Something wrong: processing')
+        discarded_idx = []
+        for idx in range(xdim):
+            if selected_dict[idx] == 0:
+                raise ValueError('Something wrong: post') 
+            elif selected_dict[idx] == -1:
+                discarded_idx.append(idx) 
+        z_pt = z.copy()
+        z_pt[discarded_idx] = 0
+        beta_mat = np.zeros((z_pt.shape[0], len(pval_cutoffs)))
+        z_cutoffs = [ scipy.stats.norm.isf(i) for i in pval_cutoffs ]
+        for zi, z_cutoff in enumerate(pval_cutoffs):
+            tmp = z_pt.copy()
+            tmp[abs_z <= z_cutoff] = 0 
+            beta_mat[:, zi] = tmp
+        return beta_mat
+    def fit_clump_ptrs(self, pval_cutoffs=[0.01, 0.05, 1], r2_cutoff=0.1):
+        betas_raw = [ self.clump(z, corr, pval_cutoffs, r2_cutoff) / np.sqrt(self.sample_size) for z, corr in zip(self.z_predixcan, self.R) ]
+        return np.concatenate(betas_raw, axis=0)
+    
+    
     

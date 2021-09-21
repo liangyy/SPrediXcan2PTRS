@@ -100,3 +100,50 @@ then
     --output_prefix $ptrs_prefix
 fi
 
+
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $ptrs_file ]]
+then
+  echo "Running SPrediXcan2PTRS"
+  echo "Input: $pxcan_file"
+  echo "Output: $ptrs_file"
+  python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $predict_db \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size $GWASN \
+    --output_prefix $ptrs_prefix \
+    --original_scale
+fi
+
+
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_pt.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $ptrs_file ]]
+then
+  echo "Running SPrediXcan2PTRS"
+  echo "Input: $pxcan_file"
+  echo "Output: $ptrs_file"
+  python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $predict_db \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size $GWASN \
+    --output_prefix $ptrs_prefix \
+    --original_scale \
+    --clump
+fi
+

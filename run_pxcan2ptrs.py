@@ -15,7 +15,9 @@ DEFAULT_PARAMS = OrderedDict([
     ('nlambda', 100),
     ('ratio_lambda', 100.),
     ('maxiter', 1000),
-    ('tol', 1e-5)
+    ('tol', 1e-5),
+    ('r2_cutoff', [ 0.1 ]),
+    ('pval_cutoffs', [ 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 0.005, 0.01, 0.05, 0.1, 0.5, 1 ])
 ])
 
 GWAS_COL_SEP = '='
@@ -71,7 +73,11 @@ def load_gwas_snp(args_gwas, args_gwas_cols, liftover_chain=None):
     
     return df
     
-    
+def maybe_scale_betahat(beta_mat, divide_factor, if_scale):
+    if if_scale is True:
+        return beta_mat / divide_factor[:, np.newaxis]
+    else:
+        return beta_mat
     
     
 
@@ -82,7 +88,8 @@ def load_params(fn_yaml=None):
         my_load = mi.read_yaml(fn_yaml)
         mi.try_cast_float(
             my_load, 
-            keys=['alpha', 'offset', 'ratio_lambda', 'tol']
+            keys=['alpha', 'offset', 'ratio_lambda', 'tol', 
+                'r2_cutoff', 'pval_cutoffs']
         )
         for k, v in my_load.items():
             my_load[k] = mi.check_param(k, v)
@@ -98,8 +105,13 @@ def load_params(fn_yaml=None):
                 other_params[k] = v
     alphas = my_load['alpha'] if 'alpha' in my_load else DEFAULT_PARAMS['alpha']
     offsets = my_load['offset'] if 'offset' in my_load else DEFAULT_PARAMS['offset']
+    r2_cutoffs = my_load['r2_cutoff'] if 'r2_cutoff' in my_load else DEFAULT_PARAMS['r2_cutoff']
     
-    return alphas, offsets, other_params
+    other_keys = ['alpha', 'offset', 'ratio_lambda', 'tol']
+    pt_keys = ['pval_cutoffs']
+    return alphas, offsets, r2_cutoffs, 
+        { k: other_params[v] for k in other_keys }, 
+        { k: other_params[v] for k in pt_keys }
 
 if __name__ == '__main__':
     import argparse
@@ -169,6 +181,16 @@ if __name__ == '__main__':
         Fitting PTRS one chromosome at a time or all jointly. 
         Typically they give very similar result (default = by_chr).
     ''')
+    parser.add_argument('--clump', action='store_true', help='''
+        If specified, will run P+T PTRS rather than EN PTRS.
+        Set the hyperparameters in --hyperparam_yaml (values listed are default)
+        r2_cutoff: [ 0.1 ]
+        pval_cutoffs: [ 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 0.005, 0.01, 0.05, 0.1, 
+            0.5, 1 ]
+    ''')
+    parser.add_argument('--original_scale', action='store_true', help='''
+        Use original scale if specified. Otherwise, use the standardized scale.
+    ''')
     args = parser.parse_args()
     
     import logging, time, sys, os
@@ -183,7 +205,7 @@ if __name__ == '__main__':
     import SPrediXcan2PTRS.util.db as db
     import SPrediXcan2PTRS.solver as so
     
-    alphas, offsets, other_params = load_params(args.hyperparam_yaml)
+    alphas, offsets, r2_cutoffs, other_params, pt_params = load_params(args.hyperparam_yaml)
     
     logging.info('Loading (S)PrediXcan results.')
     df_pxcan = pd.read_csv(args.predixcan)
@@ -218,37 +240,52 @@ if __name__ == '__main__':
         )
     )
     solver.init_model1blk()
+    sd_gene = np.sqrt(np.concatenate(solver.var_gene, axis=0))
     output_handle = h5py.File(args.output_prefix + '.results.h5', 'w')
     result_id = 0
-    for ia, alpha in enumerate(alphas):
-        for io, offset in enumerate(offsets):
-            logging.info(f'-> Working on {ia + 1}th alpha = {alpha}, {io + 1}th offset = {offset}.')
-            if args.mode == 'by_chr':
-                betahat, lambda_seq, _, _, conv = solver.fit_ptrs_by_blk(
-                    alpha=alpha, offset=offset, **other_params
+    if args.clump is False:
+        for ia, alpha in enumerate(alphas):
+            for io, offset in enumerate(offsets):
+                logging.info(f'-> Working on {ia + 1}th alpha = {alpha}, {io + 1}th offset = {offset}.')
+                if args.mode == 'by_chr':
+                    betahat, lambda_seq, _, _, conv = solver.fit_ptrs_by_blk(
+                        alpha=alpha, offset=offset, **other_params
+                    )
+                    conv = np.stack(conv)
+                    # only lambdas where all chrs converged are kept
+                    conv = conv.mean(axis=0)
+                elif args.mode == 'jointly':
+                    betahat, lambda_seq, _, _, conv = solver.fit_ptrs(
+                        alpha=alpha, offset=offset, **other_params
+                    )
+                to_keep_idxs = list(np.where(conv[1:] == 1)[0] + 1)
+                to_keep_idxs = np.array([ 0 ] + to_keep_idxs)
+                betahat = betahat[:, to_keep_idxs ]
+                betahat = maybe_scale_betahat(betahat, sd_gene, args.original_scale)
+                lambda_seq = lambda_seq[ to_keep_idxs ]
+                logging.info('-> {} lambda values converged. Saving results.'.format(lambda_seq.shape[0]))
+                save_result(
+                    output_handle, f'dataset_{result_id}',
+                    value_dict=OrderedDict([
+                        ('alpha', alpha),
+                        ('offset', offset),
+                        ('betahat', betahat),
+                        ('lambda_seq', lambda_seq)
+                    ])
                 )
-                conv = np.stack(conv)
-                # only lambdas where all chrs converged are kept
-                conv = conv.mean(axis=0)
-            elif args.mode == 'jointly':
-                betahat, lambda_seq, _, _, conv = solver.fit_ptrs(
-                    alpha=alpha, offset=offset, **other_params
-                )
-            to_keep_idxs = list(np.where(conv[1:] == 1)[0] + 1)
-            to_keep_idxs = np.array([ 0 ] + to_keep_idxs)
-            betahat = betahat[:, to_keep_idxs ]
-            lambda_seq = lambda_seq[ to_keep_idxs ]
-            logging.info('-> {} lambda values converged. Saving results.'.format(lambda_seq.shape[0]))
+                result_id += 1
+    else:
+        for ir, r2_cutoff in enumerate(r2_cutoffs):
+            betahat = solver.fit_clump_ptrs(r2_cutoff=r2_cutoff, **pt_params)
+            betahat = maybe_scale_betahat(betahat, sd_gene, args.original_scale)
             save_result(
                 output_handle, f'dataset_{result_id}',
                 value_dict=OrderedDict([
-                    ('alpha', alpha),
-                    ('offset', offset),
+                    ('r2_cutoff', r2_cutoff),
                     ('betahat', betahat),
-                    ('lambda_seq', lambda_seq)
+                    ('pval_cutoffs', pt_params['pt_params'])
                 ])
             )
-            result_id += 1
     
     logging.info('Saving other meta information.')
     output_handle.create_dataset('genes', data=np.concatenate(solver.genes).astype('S'))
