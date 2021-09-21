@@ -196,6 +196,7 @@ class Solver:
         # need to rescale lambda_
         return beta, lambda_ * (1 - offset), niter, tol, conv
     
+    @staticmethod 
     def clump(z, corr, pval_cutoffs, r2_cutoff):
         abs_z = np.absolute(z)
         sort_z_order = np.argsort(-abs_z)
@@ -208,14 +209,14 @@ class Solver:
                 continue
             elif selected_dict[curr_idx] == 0:
                 selected_dict[curr_idx] = 1
-                for possible_idx in range(xdim):
+                for possible_idx in range(z.shape[0]):
                     if selected_dict[possible_idx] == 0:
                         if (corr[curr_idx, possible_idx] ** 2) >= r2_cutoff:
                             selected_dict[possible_idx] = -1
             else:
                 raise ValueError('Something wrong: processing')
         discarded_idx = []
-        for idx in range(xdim):
+        for idx in range(z.shape[0]):
             if selected_dict[idx] == 0:
                 raise ValueError('Something wrong: post') 
             elif selected_dict[idx] == -1:

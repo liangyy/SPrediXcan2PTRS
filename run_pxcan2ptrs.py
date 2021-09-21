@@ -107,11 +107,9 @@ def load_params(fn_yaml=None):
     offsets = my_load['offset'] if 'offset' in my_load else DEFAULT_PARAMS['offset']
     r2_cutoffs = my_load['r2_cutoff'] if 'r2_cutoff' in my_load else DEFAULT_PARAMS['r2_cutoff']
     
-    other_keys = ['alpha', 'offset', 'ratio_lambda', 'tol']
+    other_keys = ['ratio_lambda', 'tol']
     pt_keys = ['pval_cutoffs']
-    return alphas, offsets, r2_cutoffs, 
-        { k: other_params[v] for k in other_keys }, 
-        { k: other_params[v] for k in pt_keys }
+    return alphas, offsets, r2_cutoffs, { k: other_params[k] for k in other_keys }, { k: other_params[k] for k in pt_keys }
 
 if __name__ == '__main__':
     import argparse
@@ -283,7 +281,7 @@ if __name__ == '__main__':
                 value_dict=OrderedDict([
                     ('r2_cutoff', r2_cutoff),
                     ('betahat', betahat),
-                    ('pval_cutoffs', pt_params['pt_params'])
+                    ('pval_cutoffs', pt_params['pval_cutoffs'])
                 ])
             )
     
