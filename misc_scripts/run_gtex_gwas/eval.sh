@@ -33,8 +33,6 @@ conda activate SPrediXcan2PTRS
 
 outdir=/scratch/t.cri.yliang/SPrediXcan2PTRS/run_gtex_gwas_eur
 pxcan_file=$outdir/spredixcan.${GWASTAG}.${TISSUE}.csv
-ptrs_prefix=$outdir/spxcan2ptrs.${GWASTAG}.${TISSUE}
-ptrs_file=$ptrs_prefix.results.h5
 pred_expr=/home/t.cri.yliang/labshare/PTRS/predicted_expression/predicted_expression.ukb_imp_x_ctimp_${TISSUE}.h5
 sample_list=${PBS_O_WORKDIR}/sample_list_for_eval.txt
 
@@ -48,10 +46,52 @@ fi
 
 eval_prefix=$outdir/eval.${GWASTAG}.${TISSUE}
 eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
 
 if [[ ! -f $eval_file ]]
 then
   echo "Running evaluation."
+  echo "Input: ..."
+  echo "Output: $eval_file"
+  python $PBS_O_WORKDIR/eval_on_ukb.py \
+    --pred_expr $pred_expr \
+    --sample_list $sample_list \
+    $nsample_cmd \
+    --list_of_ptrs ${GWASTAG}:$ptrs_file \
+    --list_of_pxcan ${GWASTAG}:$pxcan_file \
+    --output_prefix $eval_prefix
+fi
+
+
+eval_prefix=$outdir/eval_original_scale.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $eval_file ]]
+then
+  echo "Running evaluation (original scale)."
+  echo "Input: ..."
+  echo "Output: $eval_file"
+  python $PBS_O_WORKDIR/eval_on_ukb.py \
+    --pred_expr $pred_expr \
+    --sample_list $sample_list \
+    $nsample_cmd \
+    --list_of_ptrs ${GWASTAG}:$ptrs_file \
+    --list_of_pxcan ${GWASTAG}:$pxcan_file \
+    --output_prefix $eval_prefix
+fi
+
+
+eval_prefix=$outdir/eval_original_scale_pt.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_pt.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $eval_file ]]
+then
+  echo "Running evaluation (original scale pt)."
   echo "Input: ..."
   echo "Output: $eval_file"
   python $PBS_O_WORKDIR/eval_on_ukb.py \

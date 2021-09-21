@@ -73,11 +73,18 @@ def pxcan2weight(df_spxcan, pval_cutoffs, weight_col='effect_size'):
 def ptrs2weight(fn):
     with h5py.File(fn, 'r') as f:
         weights = f['dataset_0']['betahat'][:]
-        lams = f['dataset_0']['lambda_seq'][:]
+        if 'lambda_seq' in f['dataset_0']:
+            lams = f['dataset_0']['lambda_seq'][:]
+            mode = 'lambda'
+            prefix = 'PT'
+        elif 'pval_cutoffs' in f['dataset_0']:
+            lams = f['dataset_0']['pval_cutoffs'][:]
+            mode = 'pval'
+            prefix = 'CL'
         genes = f['genes'][:].astype(str)
-    df = pd.DataFrame(weights, columns=[ f'lambda_{l}' for l in lams ])
+    df = pd.DataFrame(weights, columns=[ f'{mode}_{l}' for l in lams ])
     df = pd.concat([pd.DataFrame({'gene': genes}), df], axis=1)
-    return df, lams
+    return df, lams, mode, prefix
 # def cor_mat_vec(mat, vec):
 #     return np.corrcoef(mat.T, vec[:, np.newaxis].T)[-1, :-1]
 
@@ -163,8 +170,8 @@ if __name__ == '__main__':
     for kk in args.list_of_ptrs:
         tag, fn = kk.split(':')
         logging.info(f'-> Loading {tag}.')
-        tmp, lam_dict[tag] = ptrs2weight(fn)
-        tmp.columns = tmp.columns[:1].tolist() + [ f'PT_x_{tag}_x_{i}' for i in tmp.columns[1:] ]
+        tmp, lam_dict[tag], mode, prefix = ptrs2weight(fn)
+        tmp.columns = tmp.columns[:1].tolist() + [ f'{prefix}_x_{tag}_x_{i}' for i in tmp.columns[1:] ]
         if df_weight is None:
             df_weight = tmp
         else:
@@ -190,6 +197,9 @@ if __name__ == '__main__':
         elif model == 'PT':
             model = 'en'
             val = re.sub('lambda_', '', val)
+        elif model == 'CL':
+            model = 'clump'
+            val = re.sub('pval_', '', val)
         models.append(model)
         tags.append(tag)
         values.append(float(val))
