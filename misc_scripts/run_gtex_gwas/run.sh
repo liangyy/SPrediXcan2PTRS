@@ -147,3 +147,123 @@ then
     --clump
 fi
 
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper1.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+datadir=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/SPrediXcan2PTRS/misc_scripts/run_gtex_gwas
+if [[ ! -f $ptrs_file ]]
+then
+  echo "Running SPrediXcan2PTRS"
+  echo "Input: $pxcan_file"
+  echo "Output: $ptrs_file"
+  python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $predict_db \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size $GWASN \
+    --output_prefix $ptrs_prefix \
+    --original_scale \
+    --hyperparam_yaml $datadir/hyper1.yaml
+fi
+
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper2.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+datadir=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/SPrediXcan2PTRS/misc_scripts/run_gtex_gwas
+if [[ ! -f $ptrs_file ]]
+then
+  echo "Running SPrediXcan2PTRS"
+  echo "Input: $pxcan_file"
+  echo "Output: $ptrs_file"
+  python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $predict_db \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size $GWASN \
+    --output_prefix $ptrs_prefix \
+    --original_scale \
+    --hyperparam_yaml $datadir/hyper2.yaml
+fi
+
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper3.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+datadir=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/SPrediXcan2PTRS/misc_scripts/run_gtex_gwas
+if [[ ! -f $ptrs_file ]]
+then
+  echo "Running SPrediXcan2PTRS"
+  echo "Input: $pxcan_file"
+  echo "Output: $ptrs_file"
+  python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $predict_db \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size $GWASN \
+    --output_prefix $ptrs_prefix \
+    --original_scale \
+    --hyperparam_yaml $datadir/hyper3.yaml
+fi
+
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper4.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+datadir=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/SPrediXcan2PTRS/misc_scripts/run_gtex_gwas
+if [[ ! -f $ptrs_file ]]
+then
+  echo "Running SPrediXcan2PTRS"
+  echo "Input: $pxcan_file"
+  echo "Output: $ptrs_file"
+  python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $predict_db \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size $GWASN \
+    --output_prefix $ptrs_prefix \
+    --original_scale \
+    --hyperparam_yaml $datadir/hyper4.yaml
+fi
+
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper5.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+datadir=/gpfs/data/im-lab/nas40t2/yanyul/GitHub/SPrediXcan2PTRS/misc_scripts/run_gtex_gwas
+if [[ ! -f $ptrs_file ]]
+then
+  echo "Running SPrediXcan2PTRS"
+  echo "Input: $pxcan_file"
+  echo "Output: $ptrs_file"
+  python $runscript \
+    --predixcan $pxcan_file \
+    --predictdb $predict_db \
+    --geno_cov $geno_cov_file \
+    --gwas $gwas \
+    --gwas_cols chromosome=chromosome \
+      position=position \
+      effect_allele=effect_allele \
+      non_effect_allele=non_effect_allele \
+    --gwas_sample_size $GWASN \
+    --output_prefix $ptrs_prefix \
+    --original_scale \
+    --hyperparam_yaml $datadir/hyper5.yaml
+fi
+

@@ -26,9 +26,9 @@ def save_result(f, grp_name, value_dict):
     grp = f.create_group(grp_name)
     
     for k, v in value_dict.items():
-        if k in ['betahat', 'lambda_seq']:
+        if k in ['betahat', 'lambda_seq', 'pval_cutoffs']:
             grp.create_dataset(k, data=v)
-        elif k in ['alpha', 'offset']:
+        elif k in ['alpha', 'offset', 'r2_cutoff']:
             grp.attrs[k] = v
 
 def load_gwas_snp(args_gwas, args_gwas_cols, liftover_chain=None):

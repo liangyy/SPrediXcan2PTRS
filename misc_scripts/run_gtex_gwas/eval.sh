@@ -103,5 +103,99 @@ then
     --output_prefix $eval_prefix
 fi
 
-# --seed $SEED \
+eval_prefix=$outdir/eval_original_scale_hyper1.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper1.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $eval_file ]]
+then
+  echo "Running evaluation (original scale hyper1)."
+  echo "Input: ..."
+  echo "Output: $eval_file"
+  python $PBS_O_WORKDIR/eval_on_ukb.py \
+    --pred_expr $pred_expr \
+    --sample_list $sample_list \
+    $nsample_cmd \
+    --list_of_ptrs ${GWASTAG}:$ptrs_file \
+    --list_of_pxcan ${GWASTAG}:$pxcan_file \
+    --output_prefix $eval_prefix
+fi
+
+eval_prefix=$outdir/eval_original_scale_hyper2.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper2.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $eval_file ]]
+then
+  echo "Running evaluation (original scale hyper2)."
+  echo "Input: ..."
+  echo "Output: $eval_file"
+  python $PBS_O_WORKDIR/eval_on_ukb.py \
+    --pred_expr $pred_expr \
+    --sample_list $sample_list \
+    $nsample_cmd \
+    --list_of_ptrs ${GWASTAG}:$ptrs_file \
+    --list_of_pxcan ${GWASTAG}:$pxcan_file \
+    --output_prefix $eval_prefix
+fi
+
+eval_prefix=$outdir/eval_original_scale_hyper3.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper3.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $eval_file ]]
+then
+  echo "Running evaluation (original scale hyper3)."
+  echo "Input: ..."
+  echo "Output: $eval_file"
+  python $PBS_O_WORKDIR/eval_on_ukb.py \
+    --pred_expr $pred_expr \
+    --sample_list $sample_list \
+    $nsample_cmd \
+    --list_of_ptrs ${GWASTAG}:$ptrs_file \
+    --list_of_pxcan ${GWASTAG}:$pxcan_file \
+    --output_prefix $eval_prefix
+fi
+
+eval_prefix=$outdir/eval_original_scale_hyper4.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper4.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $eval_file ]]
+then
+  echo "Running evaluation (original scale hyper4)."
+  echo "Input: ..."
+  echo "Output: $eval_file"
+  python $PBS_O_WORKDIR/eval_on_ukb.py \
+    --pred_expr $pred_expr \
+    --sample_list $sample_list \
+    $nsample_cmd \
+    --list_of_ptrs ${GWASTAG}:$ptrs_file \
+    --list_of_pxcan ${GWASTAG}:$pxcan_file \
+    --output_prefix $eval_prefix
+fi
+
+eval_prefix=$outdir/eval_original_scale_hyper5.${GWASTAG}.${TISSUE}
+eval_file=$eval_prefix.scores.parquet
+ptrs_prefix=$outdir/spxcan2ptrs_original_scale_hyper5.${GWASTAG}.${TISSUE}
+ptrs_file=$ptrs_prefix.results.h5
+
+if [[ ! -f $eval_file ]]
+then
+  echo "Running evaluation (original scale hyper5)."
+  echo "Input: ..."
+  echo "Output: $eval_file"
+  python $PBS_O_WORKDIR/eval_on_ukb.py \
+    --pred_expr $pred_expr \
+    --sample_list $sample_list \
+    $nsample_cmd \
+    --list_of_ptrs ${GWASTAG}:$ptrs_file \
+    --list_of_pxcan ${GWASTAG}:$pxcan_file \
+    --output_prefix $eval_prefix
+fi
+
 

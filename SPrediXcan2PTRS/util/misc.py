@@ -52,8 +52,11 @@ def read_yaml(yaml_):
 def _try_cast_to_float_list(val_):
     if isinstance(val_, float) or isinstance(val_, int):
         val_ = [ float(val_) ]
-    else:
-        raise ValueError(f'{val_} is unexpected.')
+    for v in val_:
+        if isinstance(v, float) or isinstance(v, int):
+            pass
+        else:
+            raise ValueError(f'{v} is unexpected.')
     return val_
 def _check_is(val_, target):
     if not isinstance(val_, target):
