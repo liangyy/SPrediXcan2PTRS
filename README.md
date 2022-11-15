@@ -3,6 +3,11 @@
 In this repository, we provide a light-weight script to convert S-PrediXcan results to PTRS weights. 
 The idea behind the theme is similar to `lassosum` in the context of GWAS: [Mak et al (2017) Polygenic scores via penalized regression on summary statistics. Genetic Epidemiology 41(6) 469-480](https://onlinelibrary.wiley.com/doi/full/10.1002/gepi.22050)
 
+# Reference
+
+Liang, Yanyu. Obtaining polygenic transcriptome risk scores (PTRS) directly from GWAS summary statistics. bioRxiv (2022)
+https://doi.org/10.1101/2022.07.10.499509 
+
 # Input
 
 1. S-PrediXcan results.
